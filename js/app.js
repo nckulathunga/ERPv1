@@ -57,9 +57,7 @@ const App = {
                         <label class="block text-sm font-medium text-gray-700 mb-1">${I18n.t('email')}</label>
                         <input 
                             type="email" 
-                            id="email" 
                             name="email" 
-                            value="admin@fleetflow.com" 
                             class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             required
                         >
@@ -68,9 +66,7 @@ const App = {
                         <label class="block text-sm font-medium text-gray-700 mb-1">${I18n.t('password')}</label>
                         <input 
                             type="password" 
-                            id="password" 
                             name="password" 
-                            value="password" 
                             class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             required
                         >
@@ -85,13 +81,6 @@ const App = {
                         </button>
                     </div>
 
-                    <div class="text-center text-xs text-gray-400 mt-4">
-                        <p>${I18n.t('demo_credentials')}</p>
-                        <p>admin@fleetflow.com / password</p>
-                        <button type="button" onclick="localStorage.clear(); window.location.reload();" class="mt-4 text-red-400 hover:text-red-600 underline">
-                            ${I18n.t('reset_demo')}
-                        </button>
-                    </div>
                 </form>
             </div>
         `;
