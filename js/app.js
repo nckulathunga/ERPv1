@@ -430,6 +430,14 @@ const App = {
         }
     },
 
+    editVehicle(id) {
+        this.openModal('edit_vehicle', id);
+    },
+
+    editFuelLog(id) {
+        this.openModal('edit_fuel', id);
+    },
+
     async handleEditVehicleSubmit(e, id) {
         e.preventDefault();
         const data = new FormData(e.target);
