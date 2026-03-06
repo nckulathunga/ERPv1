@@ -5,10 +5,10 @@
  */
 
 const Store = {
-    dbName: 'FleetFlowDB',
+    dbName: 'nckulathunga',
     // Supabase Configuration - USER NEEDS TO FILL THESE
-    supabaseUrl: 'YOUR_SUPABASE_URL',
-    supabaseKey: 'YOUR_SUPABASE_ANON_KEY',
+    supabaseUrl: 'https://pswajipccmiecdkqrnkv.supabase.co',
+    supabaseKey: 'sb_publishable_ORaaWubNVMOpfQ-1G_OjrQ_EvhK-wEl',
     supabase: null,
 
     init() {
