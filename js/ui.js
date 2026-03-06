@@ -274,8 +274,8 @@ const UI = {
         return this.filterItemsByDate(items, this.dashboardFilter, dateField);
     },
 
-    renderDashboard() {
-        if (!Auth.hasPermission('admin')) {
+    async renderDashboard() {
+        if (!await Auth.hasPermission('admin')) {
             this.content.innerHTML = this.renderEmptyState(I18n.t('access_denied') || 'Access Denied');
             return;
         }
@@ -283,10 +283,10 @@ const UI = {
             this.clearContent();
 
             // Get all data
-            let fuelLogs = Store.getAll('fuelLogs') || [];
-            let maintenanceLogs = Store.getAll('maintenanceLogs') || [];
-            let generalExpenses = Store.getAll('generalExpenses') || [];
-            let invoices = Store.getAll('invoices') || [];
+            let fuelLogs = (await Store.getAll('fuelLogs')) || [];
+            let maintenanceLogs = (await Store.getAll('maintenanceLogs')) || [];
+            let generalExpenses = (await Store.getAll('generalExpenses')) || [];
+            let invoices = (await Store.getAll('invoices')) || [];
 
             // Apply date filter
             fuelLogs = this.filterByDate(fuelLogs, 'date');
@@ -309,11 +309,13 @@ const UI = {
                 }
             });
 
+            const vehiclesList = (await Store.getAll('vehicles')) || [];
+
             const sortedVehicles = Object.entries(vehicleCosts)
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 3)
                 .map(([id, cost]) => {
-                    const v = Store.getById('vehicles', id);
+                    const v = vehiclesList.find(veh => veh.id == id);
                     if (!v) return null;
                     return { name: `${v.make} ${v.model} (${v.plate})`, cost };
                 })
@@ -321,7 +323,6 @@ const UI = {
 
             const filterType = this.dashboardFilter.type;
             const currentVehicleId = this.dashboardFilter.vehicleId;
-            const vehiclesList = Store.getAll('vehicles') || [];
 
             // Apply vehicle filter
             if (currentVehicleId !== 'all') {
@@ -452,9 +453,9 @@ const UI = {
         }
     },
 
-    renderVehicles() {
+    async renderVehicles() {
         this.clearContent();
-        const vehicles = Store.getAll('vehicles');
+        const vehicles = await Store.getAll('vehicles');
 
         const html = `
             <div class="fade-in space-y-6">

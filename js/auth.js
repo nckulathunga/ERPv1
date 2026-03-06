@@ -95,8 +95,8 @@ const Auth = {
     },
 
     isAuthenticated() {
-        //return !!this.currentUser;
-        return true;
+        return !!this.currentUser;
+        //return true;
     },
 
     getCurrentUser() {

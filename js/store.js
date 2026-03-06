@@ -96,9 +96,20 @@ const Store = {
     },
 
     // Generic Get All
+    getTableName(collection) {
+        const map = {
+            'users': 'profiles',
+            'fuelLogs': 'fuel_logs',
+            'maintenanceLogs': 'maintenance_logs',
+            'generalExpenses': 'general_expenses'
+        };
+        return map[collection] || collection;
+    },
+
     async getAll(collection) {
-        if (this.supabase && collection !== 'roles') { // Keep roles in local/meta for simplicity or fetch if needed
-            const { data, error } = await this.supabase.from(collection).select('*');
+        if (this.supabase) {
+            const tableName = this.getTableName(collection);
+            const { data, error } = await this.supabase.from(tableName).select('*');
             if (error) {
                 console.error(`Error fetching ${collection}:`, error);
                 return this.getAllLocal(collection);
@@ -115,8 +126,9 @@ const Store = {
 
     // Generic Get by ID
     async getById(collection, id) {
-        if (this.supabase && collection !== 'roles') {
-            const { data, error } = await this.supabase.from(collection).select('*').eq('id', id).single();
+        if (this.supabase) {
+            const tableName = this.getTableName(collection);
+            const { data, error } = await this.supabase.from(tableName).select('*').eq('id', id).single();
             if (error) {
                 console.error(`Error fetching ${collection} by ID:`, error);
                 return this.getAllLocal(collection).find(item => item.id == id);
@@ -129,8 +141,9 @@ const Store = {
 
     // Generic Add
     async add(collection, item) {
-        if (this.supabase && collection !== 'roles') {
-            const { data, error } = await this.supabase.from(collection).insert([item]).select();
+        if (this.supabase) {
+            const tableName = this.getTableName(collection);
+            const { data, error } = await this.supabase.from(tableName).insert([item]).select();
             if (error) {
                 console.error(`Error adding to ${collection}:`, error);
                 return this.addLocal(collection, item);
@@ -155,8 +168,9 @@ const Store = {
 
     // Generic Update
     async update(collection, id, updates) {
-        if (this.supabase && collection !== 'roles') {
-            const { data, error } = await this.supabase.from(collection).update(updates).eq('id', id).select();
+        if (this.supabase) {
+            const tableName = this.getTableName(collection);
+            const { data, error } = await this.supabase.from(tableName).update(updates).eq('id', id).select();
             if (error) {
                 console.error(`Error updating ${collection}:`, error);
                 return this.updateLocal(collection, id, updates);
@@ -179,8 +193,9 @@ const Store = {
 
     // Generic Delete
     async delete(collection, id) {
-        if (this.supabase && collection !== 'roles') {
-            const { error } = await this.supabase.from(collection).delete().eq('id', id);
+        if (this.supabase) {
+            const tableName = this.getTableName(collection);
+            const { error } = await this.supabase.from(tableName).delete().eq('id', id);
             if (error) {
                 console.error(`Error deleting from ${collection}:`, error);
                 this.deleteLocal(collection, id);

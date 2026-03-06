@@ -281,22 +281,22 @@ const App = {
         this.openModal('edit_role', oldName);
     },
 
-    deleteRole(roleName) {
+    async deleteRole(roleName) {
         if (confirm(I18n.t('confirm_delete'))) {
-            let roles = Store.getAll('roles') || ['admin', 'manager', 'finance', 'user'];
+            let roles = (await Store.getAll('roles')) || ['admin', 'manager', 'finance', 'user'];
             roles = roles.filter(r => r !== roleName);
             Store.save('roles', roles);
             this.navigateTo('users');
         }
     },
 
-    handleAddRoleSubmit(e) {
+    async handleAddRoleSubmit(e) {
         e.preventDefault();
         const data = new FormData(e.target);
         const roleName = data.get('roleName').toLowerCase().trim();
         const permissions = data.getAll('permissions');
 
-        let roles = Store.getAll('roles') || [];
+        let roles = (await Store.getAll('roles')) || [];
         if (!roles.find(r => r.name === roleName) && roleName) {
             roles.push({ name: roleName, permissions });
             Store.save('roles', roles);
@@ -305,20 +305,20 @@ const App = {
         this.navigateTo('users');
     },
 
-    handleEditRoleSubmit(e, oldName) {
+    async handleEditRoleSubmit(e, oldName) {
         e.preventDefault();
         const data = new FormData(e.target);
         const newName = data.get('roleName').toLowerCase().trim();
         const permissions = data.getAll('permissions');
 
-        let roles = Store.getAll('roles') || [];
+        let roles = (await Store.getAll('roles')) || [];
         const index = roles.findIndex(r => r.name === oldName);
         if (index !== -1 && newName) {
             roles[index] = { name: newName, permissions };
             Store.save('roles', roles);
 
             // Also update users with old role
-            const users = Store.getAll('users');
+            const users = (await Store.getAll('users')) || [];
             users.forEach(u => {
                 if (u.role === oldName) {
                     Store.update('users', u.id, { role: newName });
@@ -690,16 +690,16 @@ const App = {
         document.body.removeChild(printArea);
     },
 
-    exportDashboard(format) {
-        if (!Auth.hasPermission('export_reports')) {
+    async exportDashboard(format) {
+        if (!await Auth.hasPermission('export_reports')) {
             alert(I18n.t('no_permission') || 'You do not have permission to export reports.');
             return;
         }
         // 1. Get filtered data (reusing UI filter logic if possible, or re-implementing)
-        let fuelLogs = Store.getAll('fuelLogs') || [];
-        let maintenanceLogs = Store.getAll('maintenanceLogs') || [];
-        let generalExpenses = Store.getAll('generalExpenses') || [];
-        let invoices = Store.getAll('invoices') || [];
+        let fuelLogs = (await Store.getAll('fuelLogs')) || [];
+        let maintenanceLogs = (await Store.getAll('maintenanceLogs')) || [];
+        let generalExpenses = (await Store.getAll('generalExpenses')) || [];
+        let invoices = (await Store.getAll('invoices')) || [];
 
         // Apply date filters from UI
         fuelLogs = UI.filterByDate(fuelLogs, 'date');
@@ -724,14 +724,14 @@ const App = {
         }
     },
 
-    exportExpenses(format) {
-        if (!Auth.hasPermission('export_reports')) {
+    async exportExpenses(format) {
+        if (!await Auth.hasPermission('export_reports')) {
             alert(I18n.t('no_permission') || 'You do not have permission to export reports.');
             return;
         }
-        let fuel = Store.getAll('fuelLogs') || [];
-        let maintenance = Store.getAll('maintenanceLogs') || [];
-        let generalExpenses = Store.getAll('generalExpenses') || [];
+        let fuel = (await Store.getAll('fuelLogs')) || [];
+        let maintenance = (await Store.getAll('maintenanceLogs')) || [];
+        let generalExpenses = (await Store.getAll('generalExpenses')) || [];
 
         // Apply filters
         fuel = UI.filterItemsByDate(fuel, UI.expensesFilter, 'date');
