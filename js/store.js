@@ -107,16 +107,28 @@ const Store = {
     },
 
     async getAll(collection) {
+        let items = [];
         if (this.supabase) {
             const tableName = this.getTableName(collection);
             const { data, error } = await this.supabase.from(tableName).select('*');
             if (error) {
                 console.error(`Error fetching ${collection}:`, error);
-                return this.getAllLocal(collection);
+            } else {
+                items = data || [];
             }
-            return data;
         }
-        return this.getAllLocal(collection);
+
+        // Merge local data (or fallback completely if not on Supabase)
+        const localItems = this.getAllLocal(collection);
+        if (!this.supabase || collection === 'users' || collection === 'roles') {
+            localItems.forEach(li => {
+                const identifier = collection === 'users' ? 'email' : 'id';
+                if (!items.find(i => i[identifier] === li[identifier])) {
+                    items.push(li);
+                }
+            });
+        }
+        return items;
     },
 
     getAllLocal(collection) {
@@ -168,16 +180,20 @@ const Store = {
 
     // Generic Update
     async update(collection, id, updates) {
+        let supabaseResult = null;
         if (this.supabase) {
             const tableName = this.getTableName(collection);
             const { data, error } = await this.supabase.from(tableName).update(updates).eq('id', id).select();
             if (error) {
                 console.error(`Error updating ${collection}:`, error);
-                return this.updateLocal(collection, id, updates);
+            } else if (data && data.length > 0) {
+                supabaseResult = data[0];
             }
-            return data[0];
         }
-        return this.updateLocal(collection, id, updates);
+
+        // Also update local if it exists there or if supabase update didn't affect any rows
+        const localResult = this.updateLocal(collection, id, updates);
+        return supabaseResult || localResult;
     },
 
     updateLocal(collection, id, updates) {
@@ -198,10 +214,9 @@ const Store = {
             const { error } = await this.supabase.from(tableName).delete().eq('id', id);
             if (error) {
                 console.error(`Error deleting from ${collection}:`, error);
-                this.deleteLocal(collection, id);
             }
-            return;
         }
+        // Always attempt local delete to keep things clean
         this.deleteLocal(collection, id);
     },
 

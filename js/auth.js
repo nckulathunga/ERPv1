@@ -66,7 +66,14 @@ const Auth = {
     async signup(name, email, password, role) {
         if (Store.supabase) {
             const { data, error } = await Store.supabase.auth.signUp({ email, password });
-            if (error) return { success: false, message: error.message };
+            if (error) {
+                // Bypass for Rate Limits during development
+                if (error.message.includes('rate limit')) {
+                    console.warn('Supabase rate limit hit. Falling back to local storage for this user.');
+                    return await this.signupLocal(name, email, password, role);
+                }
+                return { success: false, message: error.message };
+            }
 
             // Create profile
             await Store.supabase.from('profiles').insert([{
@@ -80,6 +87,10 @@ const Auth = {
             return { success: true, message: 'Registration successful! Please wait for Admin approval.' };
         }
 
+        return await this.signupLocal(name, email, password, role);
+    },
+
+    async signupLocal(name, email, password, role) {
         const users = await Store.getAll('users');
         if (users.find(u => u.email === email)) {
             return { success: false, message: 'Email already registered' };
