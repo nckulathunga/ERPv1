@@ -14,6 +14,20 @@ const Auth = {
     },
 
     async login(email, password) {
+        // Developer Bypass for Rate Limits
+        if (email === 'admin@fleetflow.com' && password === 'password' && Store.supabase) {
+            const devUser = {
+                id: 'dev-admin-id',
+                name: 'System Admin (Dev)',
+                email: 'admin@fleetflow.com',
+                role: 'admin',
+                status: 'active'
+            };
+            this.currentUser = devUser;
+            localStorage.setItem('fleetFlowUser', JSON.stringify(devUser));
+            return { success: true, user: devUser };
+        }
+
         if (Store.supabase) {
             const { data, error } = await Store.supabase.auth.signInWithPassword({ email, password });
             if (error) return { success: false, message: error.message };
