@@ -7,12 +7,12 @@
 const Store = {
     dbName: 'nckulathunga',
     // Supabase Configuration - USER NEEDS TO FILL THESE
-    supabaseUrl: 'YOUR_SUPABASE_URL',
-    supabaseKey: 'YOUR_SUPABASE_KEY',
+    supabaseUrl: 'https://pswajipccmiecdkqrnkv.supabase.co',
+    supabaseKey: 'sb_publishable_ORaaWubNVMOpfQ-1G_OjrQ_EvhK-wEl',
     supabase: null,
 
     init() {
-        if (this.supabaseUrl !== 'YOUR_SUPABASE_URL' && typeof supabase !== 'undefined') {
+        if (this.supabaseUrl !== 'https://pswajipccmiecdkqrnkv.supabase.co' && typeof supabase !== 'undefined') {
             this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseKey);
             console.log('Supabase Initialized');
         } else {
