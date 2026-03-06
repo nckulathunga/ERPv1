@@ -12,7 +12,7 @@ const Store = {
     supabase: null,
 
     init() {
-        if (this.supabaseUrl !== 'https://pswajipccmiecdkqrnkv.supabase.co' && typeof supabase !== 'undefined') {
+        if (this.supabaseUrl && this.supabaseKey && typeof supabase !== 'undefined') {
             this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseKey);
             console.log('Supabase Initialized');
         } else {
