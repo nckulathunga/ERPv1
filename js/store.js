@@ -7,8 +7,8 @@
 const Store = {
     dbName: 'nckulathunga',
     // Supabase Configuration - USER NEEDS TO FILL THESE
-    supabaseUrl: 'https://pswajipccmiecdkqrnkv.supabase.co',
-    supabaseKey: 'sb_publishable_ORaaWubNVMOpfQ-1G_OjrQ_EvhK-wEl',
+    supabaseUrl: 'YOUR_SUPABASE_URL',
+    supabaseKey: 'YOUR_SUPABASE_KEY',
     supabase: null,
 
     init() {
