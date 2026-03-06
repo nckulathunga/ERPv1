@@ -479,7 +479,7 @@ const UI = {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
-                            ${vehicles.map(v => `
+                            ${await Promise.all(vehicles.map(async v => `
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 font-medium text-gray-900">${v.plate}</td>
                                     <td class="px-6 py-4 text-gray-500">${v.make} ${v.model}</td>
@@ -492,13 +492,13 @@ const UI = {
                                     </td>
                                     <td class="px-6 py-4 flex items-center gap-2">
                                         <button onclick="App.viewVehicleDetails('${v.id}')" class="text-primary hover:text-blue-700 font-medium text-sm">${I18n.t('details')}</button>
-                                        ${Auth.hasPermission('admin') ? `
+                                        ${await Auth.hasPermission('admin') ? `
                                         <button onclick="App.editVehicle('${v.id}')" class="text-blue-600 hover:text-blue-800 font-medium text-sm">${I18n.t('edit')}</button>
                                         <button onclick="App.deleteVehicle('${v.id}')" class="text-red-600 hover:text-red-800 font-medium text-sm">${I18n.t('delete')}</button>
                                         ` : ''}
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `)).then(rows => rows.join(''))}
                         </tbody>
                     </table>
                     ${vehicles.length === 0 ? this.renderEmptyState('No vehicles found') : ''}

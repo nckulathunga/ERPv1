@@ -237,10 +237,10 @@ const App = {
         }
     },
 
-    handleUserAction(userId, status) {
+    async handleUserAction(userId, status) {
         if (confirm(`Are you sure you want to set this user to ${status}?`)) {
-            Auth.updateUserStatus(userId, status);
-            this.navigateTo('users'); // Refresh
+            await Auth.updateUserStatus(userId, status);
+            await this.navigateTo('users'); // Refresh
         }
     },
 
@@ -248,7 +248,7 @@ const App = {
         this.openModal('edit_user', userId);
     },
 
-    handleEditUserSubmit(e, userId) {
+    async handleEditUserSubmit(e, userId) {
         e.preventDefault();
         const data = new FormData(e.target);
 
@@ -260,15 +260,15 @@ const App = {
             status: data.get('status')
         };
 
-        Store.update('users', userId, updates);
+        await Store.update('users', userId, updates);
         this.closeModal();
-        this.navigateTo('users');
+        await this.navigateTo('users');
     },
 
-    deleteUser(userId) {
+    async deleteUser(userId) {
         if (confirm(I18n.t('confirm_delete'))) {
-            Store.delete('users', userId);
-            this.navigateTo('users');
+            await Store.delete('users', userId);
+            await this.navigateTo('users');
         }
     },
 
@@ -283,10 +283,10 @@ const App = {
 
     async deleteRole(roleName) {
         if (confirm(I18n.t('confirm_delete'))) {
-            let roles = (await Store.getAll('roles')) || ['admin', 'manager', 'finance', 'user'];
-            roles = roles.filter(r => r !== roleName);
-            Store.save('roles', roles);
-            this.navigateTo('users');
+            let roles = (await Store.getAll('roles')) || [];
+            roles = roles.filter(r => r.name !== roleName);
+            await Store.save('roles', roles);
+            await this.navigateTo('users');
         }
     },
 
@@ -299,10 +299,10 @@ const App = {
         let roles = (await Store.getAll('roles')) || [];
         if (!roles.find(r => r.name === roleName) && roleName) {
             roles.push({ name: roleName, permissions });
-            Store.save('roles', roles);
+            await Store.save('roles', roles);
         }
         this.closeModal();
-        this.navigateTo('users');
+        await this.navigateTo('users');
     },
 
     async handleEditRoleSubmit(e, oldName) {
@@ -315,18 +315,18 @@ const App = {
         const index = roles.findIndex(r => r.name === oldName);
         if (index !== -1 && newName) {
             roles[index] = { name: newName, permissions };
-            Store.save('roles', roles);
+            await Store.save('roles', roles);
 
             // Also update users with old role
             const users = (await Store.getAll('users')) || [];
-            users.forEach(u => {
+            await Promise.all(users.map(async u => {
                 if (u.role === oldName) {
-                    Store.update('users', u.id, { role: newName });
+                    await Store.update('users', u.id, { role: newName });
                 }
-            });
+            }));
         }
         this.closeModal();
-        this.navigateTo('users');
+        await this.navigateTo('users');
     },
 
     // --- Actions ---
@@ -405,7 +405,7 @@ const App = {
         document.getElementById('modal-container').innerHTML = '';
     },
 
-    handleVehicleSubmit(e) {
+    async handleVehicleSubmit(e) {
         e.preventDefault();
         const data = new FormData(e.target);
         const vehicle = {
@@ -418,44 +418,19 @@ const App = {
             status: 'Active'
         };
 
-        Store.add('vehicles', vehicle);
+        await Store.add('vehicles', vehicle);
         this.closeModal();
-        this.navigateTo('vehicles');
+        await this.navigateTo('vehicles');
     },
 
-    editVehicle(id) {
-        this.openModal('edit_vehicle', id);
-    },
-
-    handleEditVehicleSubmit(e, id) {
-        e.preventDefault();
-        const data = new FormData(e.target);
-        const updates = {
-            plate: data.get('plate'),
-            make: data.get('make'),
-            model: data.get('model'),
-            year: parseInt(data.get('year')),
-            mileage: parseInt(data.get('mileage')),
-            status: data.get('status')
-        };
-
-        Store.update('vehicles', id, updates);
-        this.closeModal();
-        this.navigateTo('vehicles');
-    },
-
-    editVehicle(id) {
-        this.openModal('edit_vehicle', id);
-    },
-
-    deleteVehicle(id) {
+    async deleteVehicle(id) {
         if (confirm(I18n.t('confirm_delete'))) {
-            Store.delete('vehicles', id);
-            this.navigateTo('vehicles');
+            await Store.delete('vehicles', id);
+            await this.navigateTo('vehicles');
         }
     },
 
-    handleEditVehicleSubmit(e, id) {
+    async handleEditVehicleSubmit(e, id) {
         e.preventDefault();
         const data = new FormData(e.target);
         const updates = {
@@ -467,12 +442,12 @@ const App = {
             status: data.get('status')
         };
 
-        Store.update('vehicles', id, updates);
+        await Store.update('vehicles', id, updates);
         this.closeModal();
-        this.navigateTo('vehicles');
+        await this.navigateTo('vehicles');
     },
 
-    handleFuelSubmit(e, vid) {
+    async handleFuelSubmit(e, vid) {
         e.preventDefault();
         const data = new FormData(e.target);
         const vehicleId = vid || data.get('vehicleId');
@@ -486,30 +461,30 @@ const App = {
         };
 
         // Update Vehicle Mileage
-        const vehicle = Store.getById('vehicles', vehicleId);
+        const vehicle = await Store.getById('vehicles', vehicleId);
         if (vehicle && log.odometer > vehicle.mileage) {
-            Store.update('vehicles', vehicleId, { mileage: log.odometer });
+            await Store.update('vehicles', vehicleId, { mileage: log.odometer });
         }
 
-        Store.add('fuelLogs', log);
+        await Store.add('fuelLogs', log);
         this.closeModal();
         if (this.currentView === 'expenses') {
-            this.navigateTo('expenses');
+            await this.navigateTo('expenses');
         } else {
-            this.viewVehicleDetails(vehicleId);
+            await this.viewVehicleDetails(vehicleId);
         }
     },
 
-    deleteFuelLog(id) {
+    async deleteFuelLog(id) {
         if (confirm(I18n.t('confirm_delete'))) {
-            const log = Store.getById('fuelLogs', id);
+            const log = await Store.getById('fuelLogs', id);
             if (log) {
                 const vehicleId = log.vehicleId;
-                Store.delete('fuelLogs', id);
+                await Store.delete('fuelLogs', id);
                 if (this.currentView === 'expenses') {
-                    this.navigateTo('expenses');
+                    await this.navigateTo('expenses');
                 } else {
-                    this.viewVehicleDetails(vehicleId);
+                    await this.viewVehicleDetails(vehicleId);
                 }
             }
         }
@@ -519,10 +494,10 @@ const App = {
         this.openModal('edit_maintenance', id);
     },
 
-    handleEditMaintenanceSubmit(e, id) {
+    async handleEditMaintenanceSubmit(e, id) {
         e.preventDefault();
         const data = new FormData(e.target);
-        const log = Store.getById('maintenanceLogs', id);
+        const log = await Store.getById('maintenanceLogs', id);
 
         const updates = {
             date: data.get('date'),
@@ -531,32 +506,32 @@ const App = {
             cost: parseFloat(data.get('cost'))
         };
 
-        Store.update('maintenanceLogs', id, updates);
+        await Store.update('maintenanceLogs', id, updates);
 
         this.closeModal();
         if (this.currentView === 'expenses') {
-            this.navigateTo('expenses');
+            await this.navigateTo('expenses');
         } else if (log) {
-            this.viewVehicleDetails(log.vehicleId);
+            await this.viewVehicleDetails(log.vehicleId);
         }
     },
 
-    deleteMaintenanceLog(id) {
+    async deleteMaintenanceLog(id) {
         if (confirm(I18n.t('confirm_delete'))) {
-            const log = Store.getById('maintenanceLogs', id);
+            const log = await Store.getById('maintenanceLogs', id);
             if (log) {
                 const vehicleId = log.vehicleId;
-                Store.delete('maintenanceLogs', id);
+                await Store.delete('maintenanceLogs', id);
                 if (this.currentView === 'expenses') {
-                    this.navigateTo('expenses');
+                    await this.navigateTo('expenses');
                 } else {
-                    this.viewVehicleDetails(vehicleId);
+                    await this.viewVehicleDetails(vehicleId);
                 }
             }
         }
     },
 
-    handleInvoiceSubmit(e) {
+    async handleInvoiceSubmit(e) {
         e.preventDefault();
         const data = new FormData(e.target);
         const invoice = {
@@ -567,16 +542,16 @@ const App = {
             status: data.get('status')
         };
 
-        Store.add('invoices', invoice);
+        await Store.add('invoices', invoice);
         this.closeModal();
-        this.navigateTo('invoices');
+        await this.navigateTo('invoices');
     },
 
     editInvoice(id) {
         this.openModal('edit_invoice', id);
     },
 
-    handleEditInvoiceSubmit(e, id) {
+    async handleEditInvoiceSubmit(e, id) {
         e.preventDefault();
         const data = new FormData(e.target);
 
@@ -587,19 +562,19 @@ const App = {
             status: data.get('status')
         };
 
-        Store.update('invoices', id, updates);
+        await Store.update('invoices', id, updates);
         this.closeModal();
-        this.navigateTo('invoices');
+        await this.navigateTo('invoices');
     },
 
-    deleteInvoice(id) {
+    async deleteInvoice(id) {
         if (confirm(I18n.t('confirm_delete'))) {
-            Store.delete('invoices', id);
-            this.navigateTo('invoices');
+            await Store.delete('invoices', id);
+            await this.navigateTo('invoices');
         }
     },
 
-    handleGeneralExpenseSubmit(e) {
+    async handleGeneralExpenseSubmit(e) {
         e.preventDefault();
         const data = new FormData(e.target);
         const expense = {
@@ -611,16 +586,16 @@ const App = {
             vehicleId: data.get('vehicleId') || null
         };
 
-        Store.add('generalExpenses', expense);
+        await Store.add('generalExpenses', expense);
         this.closeModal();
-        this.navigateTo('expenses');
+        await this.navigateTo('expenses');
     },
 
     editGeneralExpense(id) {
         this.openModal('edit_general_expense', id);
     },
 
-    handleEditGeneralExpenseSubmit(e, id) {
+    async handleEditGeneralExpenseSubmit(e, id) {
         e.preventDefault();
         const data = new FormData(e.target);
         const updates = {
@@ -631,20 +606,20 @@ const App = {
             vehicleId: data.get('vehicleId') || null
         };
 
-        Store.update('generalExpenses', id, updates);
+        await Store.update('generalExpenses', id, updates);
         this.closeModal();
-        this.navigateTo('expenses');
+        await this.navigateTo('expenses');
     },
 
-    deleteGeneralExpense(id) {
+    async deleteGeneralExpense(id) {
         if (confirm(I18n.t('confirm_delete'))) {
-            Store.delete('generalExpenses', id);
-            this.navigateTo('expenses');
+            await Store.delete('generalExpenses', id);
+            await this.navigateTo('expenses');
         }
     },
 
-    printInvoice(id) {
-        const invoice = Store.getById('invoices', id);
+    async printInvoice(id) {
+        const invoice = await Store.getById('invoices', id);
         if (!invoice) return;
 
         // Simple Print View Injection
@@ -766,42 +741,45 @@ const App = {
         }
     },
 
-    exportToExcel(fuel, maintenance, general, invoices, fileName) {
+    async exportToExcel(fuel, maintenance, general, invoices, fileName) {
         const wb = XLSX.utils.book_new();
 
         // Helper to get plate number
-        const getPlate = (id) => Store.getById('vehicles', id)?.plate || id;
+        const getPlate = async (id) => {
+            const v = await Store.getById('vehicles', id);
+            return v ? v.plate : id;
+        };
 
         // Fuel Logs Sheet
-        const fuelData = fuel.map(l => ({
+        const fuelData = await Promise.all(fuel.map(async l => ({
             Date: l.date,
-            'Vehicle (Plate)': getPlate(l.vehicleId),
+            'Vehicle (Plate)': await getPlate(l.vehicleId),
             Liters: l.liters,
             'Cost (Rs.)': l.cost,
             'Odometer (km)': l.odometer
-        }));
+        })));
         const wsFuel = XLSX.utils.json_to_sheet(fuelData);
         XLSX.utils.book_append_sheet(wb, wsFuel, "Fuel Logs");
 
         // Maintenance Sheet
-        const maintData = maintenance.map(l => ({
+        const maintData = await Promise.all(maintenance.map(async l => ({
             Date: l.date,
-            'Vehicle (Plate)': getPlate(l.vehicleId),
+            'Vehicle (Plate)': await getPlate(l.vehicleId),
             Description: l.description,
             Type: l.type,
             'Cost (Rs.)': l.cost
-        }));
+        })));
         const wsMaint = XLSX.utils.json_to_sheet(maintData);
         XLSX.utils.book_append_sheet(wb, wsMaint, "Maintenance");
 
         // General Expenses Sheet
-        const generalData = general.map(l => ({
+        const generalData = await Promise.all(general.map(async l => ({
             Date: l.date,
             Category: I18n.t(l.type) || l.type,
             Description: l.description,
-            'Vehicle (Plate)': getPlate(l.vehicleId),
+            'Vehicle (Plate)': await getPlate(l.vehicleId),
             'Cost (Rs.)': l.cost
-        }));
+        })));
         const wsGeneral = XLSX.utils.json_to_sheet(generalData);
         XLSX.utils.book_append_sheet(wb, wsGeneral, "General Expenses");
 
@@ -819,7 +797,7 @@ const App = {
         XLSX.writeFile(wb, `${fileName}.xlsx`);
     },
 
-    exportToPDF(fuel, maintenance, general, invoices, fileName) {
+    async exportToPDF(fuel, maintenance, general, invoices, fileName) {
         if (!window.jspdf || !window.jspdf.jsPDF) {
             alert('PDF library (jsPDF) is not loaded. Please check your internet connection and reload.');
             return;
@@ -832,7 +810,10 @@ const App = {
             return;
         }
 
-        const getPlate = (id) => Store.getById('vehicles', id)?.plate || id;
+        const getPlate = async (id) => {
+            const v = await Store.getById('vehicles', id);
+            return v ? v.plate : id;
+        };
 
         doc.setFontSize(18);
         doc.text('FleetFlow Dashboard Report', 14, 22);
@@ -855,30 +836,33 @@ const App = {
 
         // Fuel Section
         doc.text('Fuel Consumption History', 14, finalY + 15);
+        const fuelBody = await Promise.all(fuel.map(async l => [l.date, await getPlate(l.vehicleId), l.liters, l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 }), l.odometer.toLocaleString()]));
         doc.autoTable({
             startY: finalY + 20,
             head: [['Date', 'Vehicle (Plate)', 'Liters', 'Cost (Rs.)', 'Odometer (km)']],
-            body: fuel.map(l => [l.date, getPlate(l.vehicleId), l.liters, l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 }), l.odometer.toLocaleString()]),
+            body: fuelBody,
         });
         finalY = doc.lastAutoTable.finalY;
 
         // Maintenance Section
         if (finalY > 210) { doc.addPage(); finalY = 10; }
         doc.text('Maintenance History', 14, finalY + 15);
+        const maintBody = await Promise.all(maintenance.map(async l => [l.date, await getPlate(l.vehicleId), l.description, l.type, l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })]));
         doc.autoTable({
             startY: finalY + 20,
             head: [['Date', 'Vehicle (Plate)', 'Description', 'Type', 'Cost (Rs.)']],
-            body: maintenance.map(l => [l.date, getPlate(l.vehicleId), l.description, l.type, l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })]),
+            body: maintBody,
         });
         finalY = doc.lastAutoTable.finalY;
 
         // General Expenses Section
         if (finalY > 210) { doc.addPage(); finalY = 10; }
         doc.text('General Expenses History', 14, finalY + 15);
+        const generalBody = await Promise.all(general.map(async l => [l.date, I18n.t(l.type) || l.type, l.description, await getPlate(l.vehicleId), l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })]));
         doc.autoTable({
             startY: finalY + 20,
             head: [['Date', 'Category', 'Description', 'Vehicle (Plate)', 'Cost (Rs.)']],
-            body: general.map(l => [l.date, I18n.t(l.type) || l.type, l.description, getPlate(l.vehicleId), l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })]),
+            body: generalBody,
         });
 
         doc.save(`${fileName}.pdf`);
