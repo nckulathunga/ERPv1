@@ -335,56 +335,69 @@ const App = {
         UI.renderVehicleDetails(id);
     },
 
-    openModal(type, id = null) {
+    async openModal(type, id = null) {
         if (type === 'vehicle') {
-            UI.renderModal(I18n.t('add_vehicle'), UI.renderVehicleForm());
+            const form = await UI.renderVehicleForm();
+            UI.renderModal(I18n.t('add_vehicle'), form);
         } else if (type === 'fuel') {
-            UI.renderModal(I18n.t('log_fuel'), UI.renderFuelForm(id));
+            const form = await UI.renderFuelForm(id);
+            UI.renderModal(I18n.t('log_fuel'), form);
         } else if (type === 'maintenance') {
-            UI.renderModal(I18n.t('log_maintenance'), UI.renderMaintenanceForm(id));
+            const form = await UI.renderMaintenanceForm(id);
+            UI.renderModal(I18n.t('log_maintenance'), form);
         } else if (type === 'invoice') {
-            UI.renderModal(I18n.t('create_invoice'), UI.renderInvoiceForm());
+            const form = await UI.renderInvoiceForm();
+            UI.renderModal(I18n.t('create_invoice'), form);
         } else if (type === 'edit_user') {
             console.log('Edit user called with ID:', id);
-            const user = Store.getById('users', id);
+            const user = await Store.getById('users', id);
             console.log('User found:', user);
             if (user) {
-                UI.renderModal(I18n.t('edit_user'), UI.renderEditUserForm(user));
+                const form = await UI.renderEditUserForm(user);
+                UI.renderModal(I18n.t('edit_user'), form);
             } else {
                 console.error('User not found with ID:', id);
                 alert('User not found!');
             }
         } else if (type === 'edit_vehicle') {
-            const vehicle = Store.getById('vehicles', id);
+            const vehicle = await Store.getById('vehicles', id);
             if (vehicle) {
-                UI.renderModal(I18n.t('edit_vehicle'), UI.renderEditVehicleForm(vehicle));
+                const form = await UI.renderEditVehicleForm(vehicle);
+                UI.renderModal(I18n.t('edit_vehicle'), form);
             }
         } else if (type === 'edit_fuel') {
-            const log = Store.getById('fuelLogs', id);
+            const log = await Store.getById('fuelLogs', id);
             if (log) {
-                UI.renderModal(I18n.t('edit_fuel_log'), UI.renderEditFuelForm(log));
+                const form = await UI.renderEditFuelForm(log);
+                UI.renderModal(I18n.t('edit_fuel_log'), form);
             }
         } else if (type === 'edit_maintenance') {
-            const log = Store.getById('maintenanceLogs', id);
+            const log = await Store.getById('maintenanceLogs', id);
             if (log) {
-                UI.renderModal(I18n.t('edit_maintenance_log'), UI.renderEditMaintenanceForm(log));
+                const form = await UI.renderEditMaintenanceForm(log);
+                UI.renderModal(I18n.t('edit_maintenance_log'), form);
             }
         } else if (type === 'edit_invoice') {
-            const invoice = Store.getById('invoices', id);
+            const invoice = await Store.getById('invoices', id);
             if (invoice) {
-                UI.renderModal(I18n.t('edit_invoice'), UI.renderEditInvoiceForm(invoice));
+                const form = await UI.renderEditInvoiceForm(invoice);
+                UI.renderModal(I18n.t('edit_invoice'), form);
             }
         } else if (type === 'general_expense') {
-            UI.renderModal(I18n.t('log_general_expense'), UI.renderGeneralExpenseForm());
+            const form = await UI.renderGeneralExpenseForm();
+            UI.renderModal(I18n.t('log_general_expense'), form);
         } else if (type === 'edit_general_expense') {
-            const expense = Store.getById('generalExpenses', id);
+            const expense = await Store.getById('generalExpenses', id);
             if (expense) {
-                UI.renderModal(I18n.t('edit_expense'), UI.renderEditGeneralExpenseForm(expense));
+                const form = await UI.renderEditGeneralExpenseForm(expense);
+                UI.renderModal(I18n.t('edit_expense'), form);
             }
         } else if (type === 'add_role') {
-            UI.renderModal(I18n.t('add_role'), UI.renderRoleForm());
+            const form = await UI.renderRoleForm();
+            UI.renderModal(I18n.t('add_role'), form);
         } else if (type === 'edit_role') {
-            UI.renderModal(I18n.t('edit_role'), UI.renderRoleForm(id));
+            const form = await UI.renderRoleForm(id);
+            UI.renderModal(I18n.t('edit_role'), form);
         }
     },
 
