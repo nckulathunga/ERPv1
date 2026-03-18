@@ -75,9 +75,12 @@ const App = {
                         ${I18n.t('sign_in')}
                     </button>
                     
-                    <div class="text-center mt-4">
+                    <div class="text-center mt-4 flex flex-col gap-2">
                          <button type="button" onclick="App.showSignup()" class="text-sm text-primary hover:underline">
                             ${I18n.t('no_account')}
+                        </button>
+                        <button type="button" onclick="App.resetDemoData()" class="text-xs text-red-500 hover:text-red-700 opacity-70 hover:opacity-100 transition-opacity mt-2">
+                            ${I18n.t('reset_demo')}
                         </button>
                     </div>
 
@@ -120,9 +123,13 @@ const App = {
     updateUserInfo() {
         const user = Auth.getCurrentUser();
         if (user) {
-            document.getElementById('user-name').textContent = user.name;
-            document.getElementById('user-role').textContent = user.role.toUpperCase();
-            document.getElementById('user-avatar').textContent = user.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+            document.getElementById('user-name').textContent = user.name || 'User';
+            let role = user.role || '';
+            if (typeof role === 'object') role = role.name || '';
+            document.getElementById('user-role').textContent = role.toUpperCase();
+            
+            const initials = (user.name || 'U').split(' ').map(n => n[0]).join('').substring(0, 2);
+            document.getElementById('user-avatar').textContent = initials;
         }
     },
 
@@ -427,6 +434,34 @@ const App = {
         this.openModal('edit_fuel', id);
     },
 
+    async handleEditFuelSubmit(e, id) {
+        e.preventDefault();
+        const data = new FormData(e.target);
+        const updates = {
+            date: data.get('date'),
+            liters: parseFloat(data.get('liters')),
+            cost: parseFloat(data.get('cost')),
+            odometer: parseInt(data.get('odometer'))
+        };
+
+        // Update Vehicle Mileage if this is the newest/highest log
+        const log = await Store.getById('fuelLogs', id);
+        if (log) {
+            const vehicle = await Store.getById('vehicles', log.vehicleId);
+            if (vehicle && updates.odometer > vehicle.mileage) {
+                await Store.update('vehicles', log.vehicleId, { mileage: updates.odometer });
+            }
+        }
+
+        await Store.update('fuelLogs', id, updates);
+        this.closeModal();
+        if (this.currentView === 'expenses') {
+            await this.navigateTo('expenses');
+        } else if (log) {
+            await this.viewVehicleDetails(log.vehicleId);
+        }
+    },
+
     async handleEditVehicleSubmit(e, id) {
         e.preventDefault();
         const data = new FormData(e.target);
@@ -489,6 +524,28 @@ const App = {
 
     editMaintenanceLog(id) {
         this.openModal('edit_maintenance', id);
+    },
+
+    async handleMaintenanceSubmit(e, vid) {
+        e.preventDefault();
+        const data = new FormData(e.target);
+        const vehicleId = vid || data.get('vehicleId');
+        const log = {
+            id: Date.now(),
+            vehicleId: vehicleId,
+            date: data.get('date'),
+            description: data.get('description'),
+            type: data.get('type'),
+            cost: parseFloat(data.get('cost'))
+        };
+
+        await Store.add('maintenanceLogs', log);
+        this.closeModal();
+        if (this.currentView === 'expenses') {
+            await this.navigateTo('expenses');
+        } else {
+            await this.viewVehicleDetails(vehicleId);
+        }
     },
 
     async handleEditMaintenanceSubmit(e, id) {
@@ -863,6 +920,14 @@ const App = {
         });
 
         doc.save(`${fileName}.pdf`);
+    },
+
+    resetDemoData() {
+        if (confirm(I18n.t('confirm_delete'))) {
+            Store.resetDB();
+            localStorage.removeItem('fleetFlowUser');
+            window.location.reload();
+        }
     }
 };
 

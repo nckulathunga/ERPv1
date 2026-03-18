@@ -47,9 +47,12 @@ const UI = {
                     <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg">
                         ${I18n.t('sign_up')}
                     </button>
-                    <div class="text-center mt-4">
-                        <button type="button" onclick="App.showLogin()" class="text-sm text-primary hover:underline">
+                    <div class="text-center mt-4 flex flex-col gap-2">
+                         <button type="button" onclick="App.showLogin()" class="text-sm text-primary hover:underline">
                             ${I18n.t('already_have_account')}
+                        </button>
+                        <button type="button" onclick="App.resetDemoData()" class="text-xs text-red-500 hover:text-red-700 opacity-70 hover:opacity-100 transition-opacity mt-2">
+                            ${I18n.t('reset_demo')}
                         </button>
                     </div>
                 </form>
@@ -86,7 +89,9 @@ const UI = {
                                     <td class="px-6 py-4 font-medium text-gray-900">${u.name}</td>
                                     <td class="px-6 py-4 text-gray-500">${u.email}</td>
                                     <td class="px-6 py-4 text-gray-500 font-mono text-xs">••••••</td>
-                                    <td class="px-6 py-4 capitalize text-gray-700">${u.role}</td>
+                                    <td class="px-6 py-4 capitalize text-gray-700">
+                                        ${typeof u.role === 'object' ? (u.role.name || 'User') : u.role}
+                                    </td>
                                     <td class="px-6 py-4">
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full ${u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
                                             ${u.status}

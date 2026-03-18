@@ -30,18 +30,22 @@ const Auth = {
 
         if (Store.supabase) {
             const { data, error } = await Store.supabase.auth.signInWithPassword({ email, password });
-            if (error) return { success: false, message: error.message };
+            
+            if (!error && data.user) {
+                // Fetch profile data
+                const userProfile = await Store.getById('profiles', data.user.id);
+                if (!userProfile || userProfile.status !== 'active') {
+                    await Store.supabase.auth.signOut();
+                    return { success: false, message: 'Account is pending approval by Admin.' };
+                }
 
-            // Fetch profile data
-            const userProfile = await Store.getById('profiles', data.user.id);
-            if (!userProfile || userProfile.status !== 'active') {
-                await Store.supabase.auth.signOut();
-                return { success: false, message: 'Account is pending approval by Admin.' };
+                this.currentUser = { ...data.user, ...userProfile };
+                localStorage.setItem('fleetFlowUser', JSON.stringify(this.currentUser));
+                return { success: true, user: this.currentUser };
             }
-
-            this.currentUser = { ...data.user, ...userProfile };
-            localStorage.setItem('fleetFlowUser', JSON.stringify(this.currentUser));
-            return { success: true, user: this.currentUser };
+            
+            // If Supabase failed but we have local storage fallback (for development/rate limits)
+            console.warn('Supabase login failed or not found. Checking local users...', error ? error.message : '');
         }
 
         const users = await Store.getAll('users');
@@ -132,7 +136,9 @@ const Auth = {
     async hasPermission(permission) {
         if (!this.currentUser) return false;
 
-        const roleName = (this.currentUser.role || '').toLowerCase();
+        let roleName = this.currentUser.role || '';
+        if (typeof roleName === 'object') roleName = roleName.name || '';
+        roleName = roleName.toLowerCase();
 
         // Admins have all permissions
         if (roleName === 'admin') return true;

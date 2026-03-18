@@ -251,6 +251,11 @@ const Store = {
 
         if (totalFuel === 0) return 0;
         return (totalDist / totalFuel).toFixed(2); // km/L
+    },
+
+    resetDB() {
+        localStorage.removeItem(this.dbName);
+        this.init();
     }
 };
 
