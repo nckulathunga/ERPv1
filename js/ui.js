@@ -1104,7 +1104,7 @@ const UI = {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">${I18n.t('password')}</label>
-                        <input type="password" name="password" placeholder="${I18n.t('leave_blank_password')}" class="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none">
+                        <input type="password" name="password" value="${user.password || ''}" required class="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none">
                     </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">${I18n.t('role_request')}</label>

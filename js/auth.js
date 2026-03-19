@@ -34,10 +34,19 @@ const Auth = {
             
             if (!error && data.user) {
                 // Fetch profile data
-                const userProfile = await Store.getById('profiles', data.user.id);
+                let userProfile = await Store.getById('profiles', data.user.id);
+                
+                // Auto-activate admins if local policy allows
+                if (userProfile && (userProfile.role === 'admin' || userProfile.role?.name === 'admin') && userProfile.status !== 'active') {
+                    console.log(`[Auth] Auto-activating Supabase admin: ${email}`);
+                    userProfile.status = 'active';
+                    await this.updateUserStatus(data.user.id, 'active');
+                }
+
                 if (!userProfile || userProfile.status !== 'active') {
                     await Store.supabase.auth.signOut();
-                    return { success: false, message: 'Account is pending approval by Admin.' };
+                    const msg = !userProfile ? 'User profile not found. Please contact support.' : 'Account is pending approval by Admin.';
+                    return { success: false, message: msg };
                 }
 
                 this.currentUser = { ...data.user, ...userProfile };
@@ -45,6 +54,12 @@ const Auth = {
                 return { success: true, user: this.currentUser };
             }
             
+            // If it's a specific Supabase error (like email not confirmed), return it instead of falling back
+            if (error && error.message && !error.message.toLowerCase().includes('invalid login credentials')) {
+                console.error('[Auth] Supabase specific error:', error.message);
+                return { success: false, message: error.message };
+            }
+
             // If Supabase failed but we have local storage fallback (for development/rate limits)
             console.warn('Supabase login failed or not found. Checking local users...', error ? error.message : '');
         }
@@ -93,13 +108,22 @@ const Auth = {
             }
 
             // Create profile
-            await Store.supabase.from('profiles').insert([{
+            const { error: profileError } = await Store.supabase.from('profiles').insert([{
                 id: data.user.id,
                 name,
                 email,
                 role,
                 status: 'pending'
             }]);
+
+            if (profileError) {
+                console.error('[Auth] Profile creation failed:', profileError.message);
+                // If user exists in Auth but not Profile, we might still want to know
+                if (profileError.message.includes('unique_email') || profileError.message.includes('already exists')) {
+                    return { success: false, message: 'Email already registered or profile exists.' };
+                }
+                return { success: false, message: 'Profile creation failed: ' + profileError.message };
+            }
 
             return { success: true, message: 'Registration successful! Please wait for Admin approval.' };
         }
@@ -108,17 +132,18 @@ const Auth = {
     },
 
     async signupLocal(name, email, password, role) {
-        console.log(`[Auth] Local signup attempt: ${email} as ${role}`);
+        const normalizedEmail = email.trim().toLowerCase();
+        console.log(`[Auth] Local signup attempt: ${normalizedEmail} as ${role}`);
         const users = await Store.getAll('users');
-        if (users.find(u => u.email === email)) {
-            console.warn(`[Auth] Signup failed: Email ${email} already registered.`);
+        if (users.find(u => u.email === normalizedEmail)) {
+            console.warn(`[Auth] Signup failed: Email ${normalizedEmail} already registered.`);
             return { success: false, message: 'Email already registered' };
         }
 
         const newUser = {
             id: Date.now(),
             name,
-            email,
+            email: normalizedEmail,
             password,
             role,
             status: 'pending'

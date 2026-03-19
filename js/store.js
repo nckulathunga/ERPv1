@@ -222,6 +222,7 @@ const Store = {
 
     updateLocal(collection, id, updates) {
         const db = this.getDB();
+        if (!db[collection]) return null;
         const index = db[collection].findIndex(item => item.id == id);
         if (index !== -1) {
             db[collection][index] = { ...db[collection][index], ...updates };
@@ -246,6 +247,7 @@ const Store = {
 
     deleteLocal(collection, id) {
         const db = this.getDB();
+        if (!db[collection]) return;
         const filtered = db[collection].filter(item => item.id != id);
         db[collection] = filtered;
         this.saveDB(db);
