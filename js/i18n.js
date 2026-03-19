@@ -134,7 +134,8 @@ const I18n = {
             others: 'Others',
             log_general_expense: 'Log General Expense',
             general_expenses: 'General Expenses',
-            select_category: 'Select Category'
+            select_category: 'Select Category',
+            leave_blank_password: 'Leave blank to keep current password'
         },
         si: {
             app_name: 'FleetFlow',
@@ -243,7 +244,8 @@ const I18n = {
             others: 'වෙනත්',
             log_general_expense: 'පොදු වියදමක් සටහන් කරන්න',
             general_expenses: 'පොදු වියදම්',
-            select_category: 'ප්‍රභවය තෝරන්න'
+            select_category: 'ප්‍රභවය තෝරන්න',
+            leave_blank_password: 'මුරපදය වෙනස් නොකිරීමට හිස්ව තබන්න'
         },
         ta: {
             app_name: 'FleetFlow',
@@ -352,7 +354,8 @@ const I18n = {
             others: 'மற்றவை',
             log_general_expense: 'பொதுவான செலவைப் பதிவு செய்யவும்',
             general_expenses: 'பொதுவான செலவுகள்',
-            select_category: 'வகையைத் தேர்ந்தெடுக்கவும்'
+            select_category: 'வகையைத் தேர்ந்தெடுக்கவும்',
+            leave_blank_password: 'கடவுச்சொல்லை மாற்றாமல் இருக்க காலியாக விடவும்'
         }
     },
 

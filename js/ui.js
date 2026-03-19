@@ -48,11 +48,8 @@ const UI = {
                         ${I18n.t('sign_up')}
                     </button>
                     <div class="text-center mt-4 flex flex-col gap-2">
-                         <button type="button" onclick="App.showLogin()" class="text-sm text-primary hover:underline">
+                        <button type="button" onclick="App.showLogin()" class="text-sm text-primary hover:underline">
                             ${I18n.t('already_have_account')}
-                        </button>
-                        <button type="button" onclick="App.resetDemoData()" class="text-xs text-red-500 hover:text-red-700 opacity-70 hover:opacity-100 transition-opacity mt-2">
-                            ${I18n.t('reset_demo')}
                         </button>
                     </div>
                 </form>
@@ -1107,7 +1104,7 @@ const UI = {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">${I18n.t('password')}</label>
-                        <input type="text" name="password" value="${user.password || ''}" class="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none">
+                        <input type="password" name="password" placeholder="${I18n.t('leave_blank_password')}" class="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none">
                     </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">${I18n.t('role_request')}</label>

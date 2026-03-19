@@ -23,6 +23,25 @@ const Store = {
             this.seedData();
         } else {
             this.migrateRoles();
+            this.repairUserData();
+        }
+    },
+
+    repairUserData() {
+        const db = this.getDB();
+        if (db.users) {
+            let changed = false;
+            db.users.forEach(user => {
+                // If password was wiped, restore to default 'password'
+                if (user.password === '' || user.password === undefined || user.password === null) {
+                    user.password = 'password';
+                    changed = true;
+                }
+            });
+            if (changed) {
+                console.log('Repaired corrupted user data.');
+                this.saveDB(db);
+            }
         }
     },
 

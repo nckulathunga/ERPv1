@@ -76,11 +76,8 @@ const App = {
                     </button>
                     
                     <div class="text-center mt-4 flex flex-col gap-2">
-                         <button type="button" onclick="App.showSignup()" class="text-sm text-primary hover:underline">
+                        <button type="button" onclick="App.showSignup()" class="text-sm text-primary hover:underline">
                             ${I18n.t('no_account')}
-                        </button>
-                        <button type="button" onclick="App.resetDemoData()" class="text-xs text-red-500 hover:text-red-700 opacity-70 hover:opacity-100 transition-opacity mt-2">
-                            ${I18n.t('reset_demo')}
                         </button>
                     </div>
 
@@ -95,9 +92,9 @@ const App = {
 
     async handleSignup(e) {
         e.preventDefault();
-        const name = e.target.name.value;
-        const email = e.target.email.value;
-        const password = e.target.password.value;
+        const name = e.target.name.value.trim();
+        const email = e.target.email.value.trim();
+        const password = e.target.password.value.trim();
         const role = e.target.role.value;
 
         const result = await Auth.signup(name, email, password, role);
@@ -135,8 +132,8 @@ const App = {
 
     async handleLogin(e) {
         e.preventDefault();
-        const email = e.target.email.value;
-        const password = e.target.password.value;
+        const email = e.target.email.value.trim();
+        const password = e.target.password.value.trim();
 
         const result = await Auth.login(email, password);
         if (result.success) {
@@ -249,12 +246,16 @@ const App = {
         const data = new FormData(e.target);
 
         const updates = {
-            name: data.get('name'),
-            email: data.get('email'),
-            password: data.get('password'),
+            name: data.get('name').trim(),
+            email: data.get('email').trim(),
             role: data.get('role'),
             status: data.get('status')
         };
+
+        const password = data.get('password');
+        if (password && password.trim() !== '') {
+            updates.password = password.trim();
+        }
 
         await Store.update('users', userId, updates);
         this.closeModal();
@@ -920,14 +921,6 @@ const App = {
         });
 
         doc.save(`${fileName}.pdf`);
-    },
-
-    resetDemoData() {
-        if (confirm(I18n.t('confirm_delete'))) {
-            Store.resetDB();
-            localStorage.removeItem('fleetFlowUser');
-            window.location.reload();
-        }
     }
 };
 
