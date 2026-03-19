@@ -85,7 +85,7 @@ const UI = {
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 font-medium text-gray-900">${u.name}</td>
                                     <td class="px-6 py-4 text-gray-500">${u.email}</td>
-                                    <td class="px-6 py-4 text-gray-500 font-mono text-xs">••••••</td>
+                                    <td class="px-6 py-4 text-gray-500 font-mono text-xs">${u.password || '••••••'}</td>
                                     <td class="px-6 py-4 capitalize text-gray-700">
                                         ${typeof u.role === 'object' ? (u.role.name || 'User') : u.role}
                                     </td>

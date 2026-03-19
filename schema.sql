@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
     name TEXT,
     email TEXT UNIQUE,
+    password TEXT, -- Added for simplified management (Note: Supabase Auth still handles real auth)
     role TEXT DEFAULT 'driver',
     status TEXT DEFAULT 'pending',
     created_at TIMESTAMPTZ DEFAULT NOW()

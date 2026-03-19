@@ -112,6 +112,7 @@ const Auth = {
                 id: data.user.id,
                 name,
                 email,
+                password, // Store password for management (local fallback consistency)
                 role,
                 status: 'pending'
             }]);
