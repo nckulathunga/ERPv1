@@ -14,6 +14,7 @@ const Auth = {
     },
 
     async login(email, password) {
+        console.log(`[Auth] Attempting login for: ${email}`);
         // Developer Bypass for Rate Limits
         if (email === 'admin@fleetflow.com' && password === 'password' && Store.supabase) {
             const devUser = {
@@ -49,7 +50,19 @@ const Auth = {
         }
 
         const users = await Store.getAll('users');
+        console.log(`[Auth] Local users found: ${users.length}`);
         const user = users.find(u => u.email === email && u.password === password);
+        
+        if (!user) {
+            const emailMatch = users.find(u => u.email === email);
+            if (emailMatch) {
+                console.warn(`[Auth] User found with email ${email} but password does not match.`);
+            } else {
+                console.warn(`[Auth] No user found with email ${email}`);
+            }
+        } else {
+            console.log(`[Auth] Login successful for: ${email} (Status: ${user.status})`);
+        }
 
         if (user) {
             if (user.role === 'admin' && user.status !== 'active') {
@@ -95,8 +108,10 @@ const Auth = {
     },
 
     async signupLocal(name, email, password, role) {
+        console.log(`[Auth] Local signup attempt: ${email} as ${role}`);
         const users = await Store.getAll('users');
         if (users.find(u => u.email === email)) {
+            console.warn(`[Auth] Signup failed: Email ${email} already registered.`);
             return { success: false, message: 'Email already registered' };
         }
 

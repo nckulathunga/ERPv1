@@ -93,7 +93,7 @@ const App = {
     async handleSignup(e) {
         e.preventDefault();
         const name = e.target.name.value.trim();
-        const email = e.target.email.value.trim();
+        const email = e.target.email.value.trim().toLowerCase();
         const password = e.target.password.value.trim();
         const role = e.target.role.value;
 
@@ -132,7 +132,7 @@ const App = {
 
     async handleLogin(e) {
         e.preventDefault();
-        const email = e.target.email.value.trim();
+        const email = e.target.email.value.trim().toLowerCase();
         const password = e.target.password.value.trim();
 
         const result = await Auth.login(email, password);
@@ -247,7 +247,7 @@ const App = {
 
         const updates = {
             name: data.get('name').trim(),
-            email: data.get('email').trim(),
+            email: data.get('email').trim().toLowerCase(),
             role: data.get('role'),
             status: data.get('status')
         };

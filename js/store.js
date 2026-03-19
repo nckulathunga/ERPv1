@@ -37,6 +37,11 @@ const Store = {
                     user.password = 'password';
                     changed = true;
                 }
+                // Normalize emails to lowercase
+                if (user.email && user.email !== user.email.toLowerCase()) {
+                    user.email = user.email.toLowerCase();
+                    changed = true;
+                }
             });
             if (changed) {
                 console.log('Repaired corrupted user data.');
