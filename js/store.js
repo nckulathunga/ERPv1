@@ -10,6 +10,7 @@ const Store = {
     supabaseUrl: 'https://pswajipccmiecdkqrnkv.supabase.co',
     supabaseKey: 'sb_publishable_ORaaWubNVMOpfQ-1G_OjrQ_EvhK-wEl',
     supabase: null,
+    isOffline: false,
 
     init() {
         if (this.supabaseUrl && this.supabaseKey && typeof supabase !== 'undefined') {
@@ -132,22 +133,34 @@ const Store = {
 
     async getAll(collection) {
         let items = [];
-        if (this.supabase) {
+        let supabaseFailed = false;
+        if (this.supabase && !this.isOffline) {
             const tableName = this.getTableName(collection);
-            const { data, error } = await this.supabase.from(tableName).select('*');
-            if (error) {
-                console.error(`Error fetching ${collection}:`, error);
-            } else {
-                items = data || [];
+            try {
+                const { data, error } = await this.supabase.from(tableName).select('*');
+                if (error) {
+                    console.error(`Error fetching ${collection}:`, error);
+                    supabaseFailed = true;
+                    this.isOffline = true;
+                } else {
+                    items = data || [];
+                }
+            } catch (error) {
+                console.error(`Exception fetching ${collection}:`, error);
+                supabaseFailed = true;
+                this.isOffline = true;
             }
         }
 
-        // Merge local data (or fallback completely if not on Supabase)
+        // Merge local data (or fallback completely if not on Supabase or if Supabase failed)
         const localItems = this.getAllLocal(collection);
-        if (!this.supabase || collection === 'users' || collection === 'roles') {
+        if (!this.supabase || supabaseFailed || items.length === 0 || collection === 'users' || collection === 'roles') {
             localItems.forEach(li => {
-                const identifier = collection === 'users' ? 'email' : 'id';
-                if (!items.find(i => i[identifier] === li[identifier])) {
+                let identifierId = 'id';
+                if (collection === 'users') identifierId = 'email';
+                if (collection === 'roles') identifierId = 'name';
+                
+                if (!items.find(i => i[identifierId] === li[identifierId])) {
                     items.push(li);
                 }
             });
@@ -162,14 +175,21 @@ const Store = {
 
     // Generic Get by ID
     async getById(collection, id) {
-        if (this.supabase) {
+        if (this.supabase && !this.isOffline) {
             const tableName = this.getTableName(collection);
-            const { data, error } = await this.supabase.from(tableName).select('*').eq('id', id).single();
-            if (error) {
-                console.error(`Error fetching ${collection} by ID:`, error);
+            try {
+                const { data, error } = await this.supabase.from(tableName).select('*').eq('id', id).single();
+                if (error) {
+                    console.error(`Error fetching ${collection} by ID:`, error);
+                    this.isOffline = true;
+                    return this.getAllLocal(collection).find(item => item.id == id);
+                }
+                return data;
+            } catch (error) {
+                console.error(`Exception fetching ${collection} by ID:`, error);
+                this.isOffline = true;
                 return this.getAllLocal(collection).find(item => item.id == id);
             }
-            return data;
         }
         const items = this.getAllLocal(collection);
         return items.find(item => item.id == id);
@@ -177,14 +197,21 @@ const Store = {
 
     // Generic Add
     async add(collection, item) {
-        if (this.supabase) {
+        if (this.supabase && !this.isOffline) {
             const tableName = this.getTableName(collection);
-            const { data, error } = await this.supabase.from(tableName).insert([item]).select();
-            if (error) {
-                console.error(`Error adding to ${collection}:`, error);
+            try {
+                const { data, error } = await this.supabase.from(tableName).insert([item]).select();
+                if (error) {
+                    console.error(`Error adding to ${collection}:`, error);
+                    this.isOffline = true;
+                    return this.addLocal(collection, item);
+                }
+                return data[0];
+            } catch (error) {
+                console.error(`Exception adding to ${collection}:`, error);
+                this.isOffline = true;
                 return this.addLocal(collection, item);
             }
-            return data[0];
         }
         return this.addLocal(collection, item);
     },
@@ -205,13 +232,19 @@ const Store = {
     // Generic Update
     async update(collection, id, updates) {
         let supabaseResult = null;
-        if (this.supabase) {
+        if (this.supabase && !this.isOffline) {
             const tableName = this.getTableName(collection);
-            const { data, error } = await this.supabase.from(tableName).update(updates).eq('id', id).select();
-            if (error) {
-                console.error(`Error updating ${collection}:`, error);
-            } else if (data && data.length > 0) {
-                supabaseResult = data[0];
+            try {
+                const { data, error } = await this.supabase.from(tableName).update(updates).eq('id', id).select();
+                if (error) {
+                    console.error(`Error updating ${collection}:`, error);
+                    this.isOffline = true;
+                } else if (data && data.length > 0) {
+                    supabaseResult = data[0];
+                }
+            } catch (error) {
+                console.error(`Exception updating ${collection}:`, error);
+                this.isOffline = true;
             }
         }
 
@@ -234,11 +267,17 @@ const Store = {
 
     // Generic Delete
     async delete(collection, id) {
-        if (this.supabase) {
+        if (this.supabase && !this.isOffline) {
             const tableName = this.getTableName(collection);
-            const { error } = await this.supabase.from(tableName).delete().eq('id', id);
-            if (error) {
-                console.error(`Error deleting from ${collection}:`, error);
+            try {
+                const { error } = await this.supabase.from(tableName).delete().eq('id', id);
+                if (error) {
+                    console.error(`Error deleting from ${collection}:`, error);
+                    this.isOffline = true;
+                }
+            } catch (error) {
+                console.error(`Exception deleting from ${collection}:`, error);
+                this.isOffline = true;
             }
         }
         // Always attempt local delete to keep things clean

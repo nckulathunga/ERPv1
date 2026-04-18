@@ -56,8 +56,12 @@ const Auth = {
             
             // If it's a specific Supabase error (like email not confirmed), return it instead of falling back
             if (error && error.message && !error.message.toLowerCase().includes('invalid login credentials')) {
-                console.error('[Auth] Supabase specific error:', error.message);
-                return { success: false, message: error.message };
+                if (error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
+                    console.warn('[Auth] Supabase network error. Falling back to local storage...', error.message);
+                } else {
+                    console.error('[Auth] Supabase specific error:', error.message);
+                    return { success: false, message: error.message };
+                }
             }
 
             // If Supabase failed but we have local storage fallback (for development/rate limits)
