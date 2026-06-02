@@ -118,7 +118,7 @@ const Auth = {
                 email,
                 password, // Store password for management (local fallback consistency)
                 role,
-                status: 'pending'
+                status: 'active'
             }]);
 
             if (profileError) {
@@ -130,7 +130,7 @@ const Auth = {
                 return { success: false, message: 'Profile creation failed: ' + profileError.message };
             }
 
-            return { success: true, message: 'Registration successful! Please wait for Admin approval.' };
+            return { success: true, message: 'Registration successful! You can now log in.' };
         }
 
         return await this.signupLocal(name, email, password, role);
@@ -151,11 +151,11 @@ const Auth = {
             email: normalizedEmail,
             password,
             role,
-            status: 'pending'
+            status: 'active'
         };
 
         await Store.add('users', newUser);
-        return { success: true, message: 'Registration successful! Please wait for Admin approval.' };
+        return { success: true, message: 'Registration successful! You can now log in.' };
     },
 
     async updateUserStatus(userId, status) {

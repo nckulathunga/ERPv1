@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT UNIQUE,
     password TEXT, -- Added for simplified management (Note: Supabase Auth still handles real auth)
     role TEXT DEFAULT 'driver',
-    status TEXT DEFAULT 'pending',
+    status TEXT DEFAULT 'active',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
