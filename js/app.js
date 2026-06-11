@@ -172,6 +172,7 @@ const App = {
         const items = [
             { id: 'dashboard', label: I18n.t('dashboard'), icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', permission: 'view_dashboard' },
             { id: 'vehicles', label: I18n.t('fleet'), icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16v.01M21 12.14l-3.328-1.745A1.996 1.996 0 0017.306 10H15V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8l3.125 1.625c.343.179.695.344 1.053.493V21H16v-2.015c.358-.149.71-.314 1.053-.493l1.822.947A2 2 0 0021 17.653V12.14z', permission: 'manage_vehicles' },
+            { id: 'maintenance', label: I18n.t('maintenance_history'), icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', permission: 'manage_maintenance_logs' },
             { id: 'invoices', label: I18n.t('invoices'), icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', permission: 'manage_invoices' },
             { id: 'expenses', label: I18n.t('expenses'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', permission: 'manage_expenses' },
             { id: 'users', label: I18n.t('users'), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', permission: 'manage_users' },
@@ -211,12 +212,19 @@ const App = {
             return await this.navigateTo('dashboard');
         }
 
+        if (pageId === 'maintenance' && !await Auth.hasPermission('manage_maintenance_logs')) {
+            return await this.navigateTo('dashboard');
+        }
+
         switch (pageId) {
             case 'dashboard':
                 await UI.renderDashboard();
                 break;
             case 'vehicles':
                 await UI.renderVehicles();
+                break;
+            case 'maintenance':
+                await UI.renderMaintenanceView();
                 break;
             case 'invoices':
                 await UI.renderInvoices();
@@ -544,6 +552,8 @@ const App = {
         this.closeModal();
         if (this.currentView === 'expenses') {
             await this.navigateTo('expenses');
+        } else if (this.currentView === 'maintenance') {
+            await this.navigateTo('maintenance');
         } else {
             await this.viewVehicleDetails(vehicleId);
         }
@@ -566,6 +576,8 @@ const App = {
         this.closeModal();
         if (this.currentView === 'expenses') {
             await this.navigateTo('expenses');
+        } else if (this.currentView === 'maintenance') {
+            await this.navigateTo('maintenance');
         } else if (log) {
             await this.viewVehicleDetails(log.vehicleId);
         }
@@ -579,6 +591,8 @@ const App = {
                 await Store.delete('maintenanceLogs', id);
                 if (this.currentView === 'expenses') {
                     await this.navigateTo('expenses');
+                } else if (this.currentView === 'maintenance') {
+                    await this.navigateTo('maintenance');
                 } else {
                     await this.viewVehicleDetails(vehicleId);
                 }
@@ -796,6 +810,29 @@ const App = {
         }
     },
 
+    async exportMaintenance(format) {
+        if (!await Auth.hasPermission('export_reports')) {
+            alert(I18n.t('no_permission') || 'You do not have permission to export reports.');
+            return;
+        }
+        let maintenance = (await Store.getAll('maintenanceLogs')) || [];
+
+        // Apply filters
+        maintenance = UI.filterItemsByDate(maintenance, UI.maintenanceFilter, 'date');
+
+        if (UI.maintenanceFilter.vehicleId !== 'all') {
+            maintenance = maintenance.filter(l => l.vehicleId === UI.maintenanceFilter.vehicleId);
+        }
+
+        const fileName = `FleetFlow_Maintenance_${new Date().toISOString().split('T')[0]}`;
+
+        if (format === 'excel') {
+            this.exportToExcel([], maintenance, [], [], fileName);
+        } else if (format === 'pdf') {
+            this.exportToPDF([], maintenance, [], [], fileName);
+        }
+    },
+
     async exportToExcel(fuel, maintenance, general, invoices, fileName) {
         const wb = XLSX.utils.book_new();
 
@@ -806,48 +843,56 @@ const App = {
         };
 
         // Fuel Logs Sheet
-        const fuelData = await Promise.all(fuel.map(async l => ({
-            Date: l.date,
-            'Vehicle (Plate)': await getPlate(l.vehicleId),
-            Liters: l.liters,
-            'Cost (Rs.)': l.cost,
-            'Odometer (km)': l.odometer
-        })));
-        const wsFuel = XLSX.utils.json_to_sheet(fuelData);
-        XLSX.utils.book_append_sheet(wb, wsFuel, "Fuel Logs");
+        if (fuel && fuel.length > 0) {
+            const fuelData = await Promise.all(fuel.map(async l => ({
+                Date: l.date,
+                'Vehicle (Plate)': await getPlate(l.vehicleId),
+                Liters: l.liters,
+                'Cost (Rs.)': l.cost,
+                'Odometer (km)': l.odometer
+            })));
+            const wsFuel = XLSX.utils.json_to_sheet(fuelData);
+            XLSX.utils.book_append_sheet(wb, wsFuel, "Fuel Logs");
+        }
 
         // Maintenance Sheet
-        const maintData = await Promise.all(maintenance.map(async l => ({
-            Date: l.date,
-            'Vehicle (Plate)': await getPlate(l.vehicleId),
-            Description: l.description,
-            Type: l.type,
-            'Cost (Rs.)': l.cost
-        })));
-        const wsMaint = XLSX.utils.json_to_sheet(maintData);
-        XLSX.utils.book_append_sheet(wb, wsMaint, "Maintenance");
+        if (maintenance && maintenance.length > 0) {
+            const maintData = await Promise.all(maintenance.map(async l => ({
+                Date: l.date,
+                'Vehicle (Plate)': await getPlate(l.vehicleId),
+                Description: l.description,
+                Type: l.type,
+                'Cost (Rs.)': l.cost
+            })));
+            const wsMaint = XLSX.utils.json_to_sheet(maintData);
+            XLSX.utils.book_append_sheet(wb, wsMaint, "Maintenance");
+        }
 
         // General Expenses Sheet
-        const generalData = await Promise.all(general.map(async l => ({
-            Date: l.date,
-            Category: I18n.t(l.type) || l.type,
-            Description: l.description,
-            'Vehicle (Plate)': await getPlate(l.vehicleId),
-            'Cost (Rs.)': l.cost
-        })));
-        const wsGeneral = XLSX.utils.json_to_sheet(generalData);
-        XLSX.utils.book_append_sheet(wb, wsGeneral, "General Expenses");
+        if (general && general.length > 0) {
+            const generalData = await Promise.all(general.map(async l => ({
+                Date: l.date,
+                Category: I18n.t(l.type) || l.type,
+                Description: l.description,
+                'Vehicle (Plate)': await getPlate(l.vehicleId),
+                'Cost (Rs.)': l.cost
+            })));
+            const wsGeneral = XLSX.utils.json_to_sheet(generalData);
+            XLSX.utils.book_append_sheet(wb, wsGeneral, "General Expenses");
+        }
 
         // Invoices Sheet
-        const invData = invoices.map(i => ({
-            'Invoice #': i.id,
-            'Client Name': i.clientId,
-            'Issue Date': i.issueDate,
-            'Amount (Rs.)': i.amount,
-            Status: i.status
-        }));
-        const wsInv = XLSX.utils.json_to_sheet(invData);
-        XLSX.utils.book_append_sheet(wb, wsInv, "Invoices");
+        if (invoices && invoices.length > 0) {
+            const invData = invoices.map(i => ({
+                'Invoice #': i.id,
+                'Client Name': i.clientId,
+                'Issue Date': i.issueDate,
+                'Amount (Rs.)': i.amount,
+                Status: i.status
+            }));
+            const wsInv = XLSX.utils.json_to_sheet(invData);
+            XLSX.utils.book_append_sheet(wb, wsInv, "Invoices");
+        }
 
         XLSX.writeFile(wb, `${fileName}.xlsx`);
     },
@@ -871,7 +916,7 @@ const App = {
         };
 
         doc.setFontSize(18);
-        doc.text('FleetFlow Dashboard Report', 14, 22);
+        doc.text('FleetFlow Report', 14, 22);
         doc.setFontSize(11);
         doc.setTextColor(100);
         doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
@@ -879,46 +924,60 @@ const App = {
         let finalY = 35;
 
         // Invoices Section
-        doc.setFontSize(14);
-        doc.setTextColor(0);
-        doc.text('Invoices Summary', 14, finalY + 10);
-        doc.autoTable({
-            startY: finalY + 15,
-            head: [['Invoice #', 'Client', 'Date', 'Amount (Rs.)', 'Status']],
-            body: invoices.map(i => [i.id, i.clientId, i.issueDate, i.amount.toLocaleString(undefined, { minimumFractionDigits: 2 }), i.status]),
-        });
-        finalY = doc.lastAutoTable.finalY;
+        if (invoices && invoices.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            doc.text('Invoices Summary', 14, finalY + 10);
+            doc.autoTable({
+                startY: finalY + 15,
+                head: [['Invoice #', 'Client', 'Date', 'Amount (Rs.)', 'Status']],
+                body: invoices.map(i => [i.id, i.clientId, i.issueDate, i.amount.toLocaleString(undefined, { minimumFractionDigits: 2 }), i.status]),
+            });
+            finalY = doc.lastAutoTable.finalY;
+        }
 
         // Fuel Section
-        doc.text('Fuel Consumption History', 14, finalY + 15);
-        const fuelBody = await Promise.all(fuel.map(async l => [l.date, await getPlate(l.vehicleId), l.liters, l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 }), l.odometer.toLocaleString()]));
-        doc.autoTable({
-            startY: finalY + 20,
-            head: [['Date', 'Vehicle (Plate)', 'Liters', 'Cost (Rs.)', 'Odometer (km)']],
-            body: fuelBody,
-        });
-        finalY = doc.lastAutoTable.finalY;
+        if (fuel && fuel.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            doc.text('Fuel Consumption History', 14, finalY + 15);
+            const fuelBody = await Promise.all(fuel.map(async l => [l.date, await getPlate(l.vehicleId), l.liters, l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 }), l.odometer.toLocaleString()]));
+            doc.autoTable({
+                startY: finalY + 20,
+                head: [['Date', 'Vehicle (Plate)', 'Liters', 'Cost (Rs.)', 'Odometer (km)']],
+                body: fuelBody,
+            });
+            finalY = doc.lastAutoTable.finalY;
+        }
 
         // Maintenance Section
-        if (finalY > 210) { doc.addPage(); finalY = 10; }
-        doc.text('Maintenance History', 14, finalY + 15);
-        const maintBody = await Promise.all(maintenance.map(async l => [l.date, await getPlate(l.vehicleId), l.description, l.type, l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })]));
-        doc.autoTable({
-            startY: finalY + 20,
-            head: [['Date', 'Vehicle (Plate)', 'Description', 'Type', 'Cost (Rs.)']],
-            body: maintBody,
-        });
-        finalY = doc.lastAutoTable.finalY;
+        if (maintenance && maintenance.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            if (finalY > 210) { doc.addPage(); finalY = 10; }
+            doc.text('Maintenance History', 14, finalY + 15);
+            const maintBody = await Promise.all(maintenance.map(async l => [l.date, await getPlate(l.vehicleId), l.description, l.type, l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })]));
+            doc.autoTable({
+                startY: finalY + 20,
+                head: [['Date', 'Vehicle (Plate)', 'Description', 'Type', 'Cost (Rs.)']],
+                body: maintBody,
+            });
+            finalY = doc.lastAutoTable.finalY;
+        }
 
         // General Expenses Section
-        if (finalY > 210) { doc.addPage(); finalY = 10; }
-        doc.text('General Expenses History', 14, finalY + 15);
-        const generalBody = await Promise.all(general.map(async l => [l.date, I18n.t(l.type) || l.type, l.description, await getPlate(l.vehicleId), l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })]));
-        doc.autoTable({
-            startY: finalY + 20,
-            head: [['Date', 'Category', 'Description', 'Vehicle (Plate)', 'Cost (Rs.)']],
-            body: generalBody,
-        });
+        if (general && general.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            if (finalY > 210) { doc.addPage(); finalY = 10; }
+            doc.text('General Expenses History', 14, finalY + 15);
+            const generalBody = await Promise.all(general.map(async l => [l.date, I18n.t(l.type) || l.type, l.description, await getPlate(l.vehicleId), l.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })]));
+            doc.autoTable({
+                startY: finalY + 20,
+                head: [['Date', 'Category', 'Description', 'Vehicle (Plate)', 'Cost (Rs.)']],
+                body: generalBody,
+            });
+        }
 
         doc.save(`${fileName}.pdf`);
     }

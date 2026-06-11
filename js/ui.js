@@ -255,6 +255,39 @@ const UI = {
         }
     },
 
+    // Maintenance filter state
+    maintenanceFilter: {
+        type: 'all',
+        fromDate: null,
+        toDate: null,
+        vehicleId: 'all'
+    },
+
+    setMaintenanceFilter(type, fromDate = null, toDate = null, vehicleId = null) {
+        this.maintenanceFilter = {
+            ...this.maintenanceFilter,
+            type,
+            fromDate,
+            toDate
+        };
+        if (vehicleId !== null) this.maintenanceFilter.vehicleId = vehicleId;
+        this.renderMaintenanceView();
+    },
+
+    applyMaintenanceVehicleFilter() {
+        const vehicleId = document.getElementById('filter-maintenance-vehicle').value;
+        this.maintenanceFilter.vehicleId = vehicleId;
+        this.renderMaintenanceView();
+    },
+
+    applyMaintenanceCustomFilter() {
+        const from = document.getElementById('filter-maintenance-from').value;
+        const to = document.getElementById('filter-maintenance-to').value;
+        if (from && to) {
+            this.setMaintenanceFilter('custom', from, to);
+        }
+    },
+
     filterItemsByDate(items, filter, dateField = 'date') {
         const { type, fromDate, toDate } = filter;
         if (type === 'all') return items;
@@ -705,6 +738,130 @@ const UI = {
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                                 </button>
                                                 <button onclick="App.${e.category === 'Fuel' ? 'deleteFuelLog' : (e.category === 'Maintenance' ? 'deleteMaintenanceLog' : 'deleteGeneralExpense')}('${e.id}')" class="text-red-600 hover:text-red-800">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        ` : ''}
+                                    </tr>
+                                `)).then(rows => rows.join('')) : `
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                            <div class="flex flex-col items-center gap-2">
+                                                <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                <span>${I18n.t('no_records_found') || 'No records found for the selected filters'}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        this.content.innerHTML = html;
+    },
+
+    // --- Maintenance View ---
+    async renderMaintenanceView() {
+        this.clearContent();
+        let maintenanceLogs = await Store.getAll('maintenanceLogs') || [];
+        const vehicles = await Store.getAll('vehicles') || [];
+
+        // Apply filters
+        maintenanceLogs = this.filterItemsByDate(maintenanceLogs, this.maintenanceFilter);
+
+        if (this.maintenanceFilter.vehicleId !== 'all') {
+            maintenanceLogs = maintenanceLogs.filter(l => l.vehicleId === this.maintenanceFilter.vehicleId);
+        }
+
+        // Sort by date descending
+        maintenanceLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const getPlate = (id) => vehicles.find(v => v.id === id)?.plate || id;
+
+        const html = `
+            <div class="fade-in space-y-6">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <h2 class="text-2xl font-bold text-gray-800">${I18n.t('maintenance_history')}</h2>
+                    <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+                        <button onclick="App.exportMaintenance('excel')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>${I18n.t('export_excel')}</span>
+                        </button>
+                        <button onclick="App.exportMaintenance('pdf')" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>${I18n.t('export_pdf')}</span>
+                        </button>
+                        <button onclick="App.openModal('maintenance')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm text-sm">
+                            <span class="text-lg font-bold">+</span>
+                            <span>${I18n.t('log_maintenance')}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm glass-card space-y-4">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">${I18n.t('filter_by_vehicle')}</label>
+                            <select id="filter-maintenance-vehicle" onchange="UI.applyMaintenanceVehicleFilter()" class="w-full px-3 py-2 rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all bg-gray-50/50">
+                                <option value="all">${I18n.t('all_vehicles')}</option>
+                                ${vehicles.map(v => `<option value="${v.id}" ${this.maintenanceFilter.vehicleId === v.id ? 'selected' : ''}>${v.plate} - ${v.make} ${v.model}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="flex-grow flex items-end gap-2">
+                            <div class="flex rounded-lg bg-gray-100 p-1">
+                                <button onclick="UI.setMaintenanceFilter('all')" class="px-4 py-2 rounded-md text-sm font-medium transition-all ${this.maintenanceFilter.type === 'all' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}">${I18n.t('all_time')}</button>
+                                <button onclick="UI.setMaintenanceFilter('month')" class="px-4 py-2 rounded-md text-sm font-medium transition-all ${this.maintenanceFilter.type === 'month' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}">${I18n.t('this_month')}</button>
+                                <button onclick="UI.setMaintenanceFilter('year')" class="px-4 py-2 rounded-md text-sm font-medium transition-all ${this.maintenanceFilter.type === 'year' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}">${I18n.t('this_year')}</button>
+                            </div>
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <div class="flex items-center gap-2">
+                                <input type="date" id="filter-maintenance-from" value="${this.maintenanceFilter.fromDate || ''}" class="px-3 py-2 rounded-lg border border-gray-200 outline-none text-sm bg-gray-50/50">
+                                <span class="text-gray-400">→</span>
+                                <input type="date" id="filter-maintenance-to" value="${this.maintenanceFilter.toDate || ''}" class="px-3 py-2 rounded-lg border border-gray-200 outline-none text-sm bg-gray-50/50">
+                            </div>
+                            <button onclick="UI.applyMaintenanceCustomFilter()" class="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm">
+                                ${I18n.t('apply_filter')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm glass-card overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase">${I18n.t('date')}</th>
+                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase">${I18n.t('plate_number')}</th>
+                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase">${I18n.t('description')}</th>
+                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase">${I18n.t('type')}</th>
+                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase">${I18n.t('cost')}</th>
+                                    ${await Auth.hasPermission('manage_maintenance_logs') ? `<th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-right">${I18n.t('actions') || 'Actions'}</th>` : ''}
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${maintenanceLogs.length > 0 ? await Promise.all(maintenanceLogs.map(async e => `
+                                    <tr class="hover:bg-gray-50 group">
+                                        <td class="px-6 py-4 text-gray-500">${this.formatDate(e.date)}</td>
+                                        <td class="px-6 py-4 font-medium text-gray-900">${getPlate(e.vehicleId)}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">${e.description}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${e.type === 'Routine' ? 'bg-blue-100 text-blue-800' : (e.type === 'Repair' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')}">
+                                                ${I18n.t(e.type.toLowerCase()) || e.type}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 font-bold text-gray-900">${this.formatCurrency(e.cost)}</td>
+                                        ${await Auth.hasPermission('manage_maintenance_logs') ? `
+                                        <td class="px-6 py-4 text-right whitespace-nowrap">
+                                            <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onclick="App.editMaintenanceLog('${e.id}')" class="text-blue-600 hover:text-blue-800">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                </button>
+                                                <button onclick="App.deleteMaintenanceLog('${e.id}')" class="text-red-600 hover:text-red-800">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                 </button>
                                             </div>
