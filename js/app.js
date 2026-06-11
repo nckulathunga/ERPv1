@@ -79,6 +79,9 @@ const App = {
                         <button type="button" onclick="App.showSignup()" class="text-sm text-primary hover:underline">
                             ${I18n.t('no_account')}
                         </button>
+                        <a href="landing.html" class="text-sm text-gray-400 hover:text-gray-600 transition-colors mt-1">
+                            ← Back to Home
+                        </a>
                     </div>
 
                 </form>
