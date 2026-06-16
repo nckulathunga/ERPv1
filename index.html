@@ -4,153 +4,1180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FleetFlow Management System</title>
+    <title>FleetFlow — Fleet & Logistics Services</title>
+    <meta name="description"
+        content="Request professional fleet, freight, and delivery services with FleetFlow. Fast, reliable, and transparent logistics for your business.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: '#3B82F6', // Blue-500
-                        secondary: '#10B981', // Emerald-500
-                        accent: '#F59E0B', // Amber-500
-                        dark: '#1F2937', // Gray-800
-                        light: '#F3F4F6', // Gray-100
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Excel & PDF Export -->
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>window.jsPDF = window.jspdf.jsPDF;</script>
-    <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
-    <!-- Project CSS -->
-    <link rel="stylesheet" href="css/styles.css">
-
-    <!-- Favicon (Optional) -->
+    <!-- Favicon -->
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚛</text></svg>">
+
+    <style>
+        /* ============================================================
+           DESIGN SYSTEM — CSS CUSTOM PROPERTIES
+        ============================================================ */
+        :root {
+            --clr-primary: #2563eb;
+            --clr-primary-dark: #1d4ed8;
+            --clr-primary-glow: rgba(37, 99, 235, 0.25);
+            --clr-accent: #f59e0b;
+            --clr-accent-dark: #d97706;
+            --clr-bg: #060c1a;
+            --clr-bg-card: rgba(255, 255, 255, 0.04);
+            --clr-bg-card-hover: rgba(255, 255, 255, 0.08);
+            --clr-border: rgba(255, 255, 255, 0.08);
+            --clr-border-hover: rgba(37, 99, 235, 0.5);
+            --clr-text: #f1f5f9;
+            --clr-text-muted: #94a3b8;
+            --clr-text-dim: #64748b;
+            --clr-success: #10b981;
+            --clr-error: #ef4444;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --shadow-card: 0 4px 32px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 40px rgba(37, 99, 235, 0.15);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ============================================================
+           RESET & BASE
+        ============================================================ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--clr-bg);
+            color: var(--clr-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ============================================================
+           ANIMATED BACKGROUND
+        ============================================================ */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-canvas::before {
+            content: '';
+            position: absolute;
+            width: 900px;
+            height: 900px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, transparent 70%);
+            top: -300px;
+            left: -200px;
+            animation: drift1 18s ease-in-out infinite alternate;
+        }
+
+        .bg-canvas::after {
+            content: '';
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+            bottom: -200px;
+            right: -100px;
+            animation: drift2 22s ease-in-out infinite alternate;
+        }
+
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        @keyframes drift1 {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(80px, 60px) scale(1.1); }
+        }
+        @keyframes drift2 {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(-60px, -80px) scale(1.15); }
+        }
+
+        /* ============================================================
+           LAYOUT HELPERS
+        ============================================================ */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        section { position: relative; z-index: 1; }
+
+        /* ============================================================
+           NAVBAR
+        ============================================================ */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 24px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(6, 12, 26, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--clr-border);
+            transition: var(--transition);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--clr-text);
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-brand span { color: var(--clr-primary); }
+
+        .navbar-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--clr-primary), #3b82f6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px var(--clr-primary-glow);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-nav-anchor {
+            color: var(--clr-text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .btn-nav-anchor:hover { color: var(--clr-text); }
+
+        .btn-login {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 22px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-dark));
+            color: #fff;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px var(--clr-primary-glow);
+            letter-spacing: 0.2px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.45);
+        }
+
+        .btn-login:active { transform: translateY(0); }
+
+        /* ============================================================
+           HERO SECTION
+        ============================================================ */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 60px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 100px;
+            background: rgba(37, 99, 235, 0.12);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            color: #93c5fd;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+            animation: fadeInUp 0.6s ease both;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--clr-primary);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%  { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .hero-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2.8rem, 7vw, 5.5rem);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -2px;
+            margin-bottom: 22px;
+            animation: fadeInUp 0.7s ease 0.1s both;
+        }
+
+        .hero-title .line-blue {
+            background: linear-gradient(135deg, #60a5fa, #2563eb, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-title .line-gold {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #fcd34d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            max-width: 560px;
+            font-size: 1.125rem;
+            color: var(--clr-text-muted);
+            line-height: 1.7;
+            margin-bottom: 44px;
+            animation: fadeInUp 0.7s ease 0.2s both;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeInUp 0.7s ease 0.3s both;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 32px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-dark));
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 6px 24px var(--clr-primary-glow);
+            letter-spacing: 0.2px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(37, 99, 235, 0.5);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 32px;
+            border-radius: var(--radius-md);
+            background: var(--clr-bg-card);
+            color: var(--clr-text);
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid var(--clr-border);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: var(--clr-bg-card-hover);
+            border-color: var(--clr-border-hover);
+            transform: translateY(-2px);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+            margin-top: 72px;
+            padding-top: 40px;
+            border-top: 1px solid var(--clr-border);
+            animation: fadeInUp 0.7s ease 0.4s both;
+        }
+
+        .stat-item { text-align: center; }
+
+        .stat-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--clr-text);
+            line-height: 1;
+        }
+
+        .stat-number span { color: var(--clr-primary); }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--clr-text-dim);
+            font-weight: 500;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================================
+           SERVICES SECTION
+        ============================================================ */
+        .services {
+            padding: 80px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-eyebrow {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--clr-primary);
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.15;
+            margin-bottom: 14px;
+        }
+
+        .section-desc {
+            font-size: 1rem;
+            color: var(--clr-text-muted);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .service-card {
+            background: var(--clr-bg-card);
+            border: 1px solid var(--clr-border);
+            border-radius: var(--radius-lg);
+            padding: 32px 28px;
+            transition: var(--transition);
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), transparent);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .service-card:hover {
+            border-color: var(--clr-border-hover);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-glow), var(--shadow-card);
+        }
+
+        .service-card:hover::before { opacity: 1; }
+
+        .service-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .icon-blue  { background: rgba(37, 99, 235, 0.15); }
+        .icon-gold  { background: rgba(245, 158, 11, 0.15); }
+        .icon-green { background: rgba(16, 185, 129, 0.15); }
+        .icon-purple{ background: rgba(139, 92, 246, 0.15); }
+
+        .service-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .service-desc {
+            font-size: 0.9rem;
+            color: var(--clr-text-muted);
+            line-height: 1.65;
+        }
+
+        /* ============================================================
+           SERVICE REQUEST FORM SECTION
+        ============================================================ */
+        .request-section {
+            padding: 80px 0 120px;
+        }
+
+        .form-wrapper {
+            max-width: 760px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid var(--clr-border);
+            border-radius: var(--radius-xl);
+            padding: 52px 52px;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .form-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            font-size: 0.9rem;
+            color: var(--clr-text-muted);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .form-group.full { grid-column: 1 / -1; }
+
+        .form-label {
+            font-size: 0.825rem;
+            font-weight: 600;
+            color: var(--clr-text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        .form-label .required { color: var(--clr-accent); margin-left: 2px; }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--clr-border);
+            color: var(--clr-text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.925rem;
+            transition: var(--transition);
+            outline: none;
+            appearance: none;
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder { color: var(--clr-text-dim); }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: var(--clr-primary);
+            background: rgba(37, 99, 235, 0.06);
+            box-shadow: 0 0 0 3px var(--clr-primary-glow);
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            padding-right: 42px;
+            cursor: pointer;
+        }
+
+        .form-select option {
+            background: #0f172a;
+            color: var(--clr-text);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 18px;
+        }
+
+        .form-row .form-group { flex: 1; }
+
+        .date-time-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .form-divider {
+            height: 1px;
+            background: var(--clr-border);
+            margin: 8px 0;
+            grid-column: 1 / -1;
+        }
+
+        .form-section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--clr-primary);
+            grid-column: 1 / -1;
+            margin-top: 6px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px 32px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--clr-primary), #4f46e5);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 6px 24px var(--clr-primary-glow);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(37, 99, 235, 0.5);
+        }
+
+        .btn-submit:active { transform: translateY(0); }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-submit .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+
+        .btn-submit.loading .spinner { display: block; }
+        .btn-submit.loading .btn-text { display: none; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 9999;
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 380px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08));
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #6ee7b7;
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.08));
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        .toast-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+        /* ============================================================
+           FOOTER
+        ============================================================ */
+        .footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--clr-border);
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .footer-brand {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--clr-text);
+            margin-bottom: 8px;
+        }
+
+        .footer-brand span { color: var(--clr-primary); }
+
+        .footer-copy {
+            font-size: 0.825rem;
+            color: var(--clr-text-dim);
+        }
+
+        /* ============================================================
+           SCROLL REVEAL ANIMATION
+        ============================================================ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.65s ease, transform 0.65s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+        @media (max-width: 768px) {
+            .form-wrapper { padding: 36px 24px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .date-time-group { grid-template-columns: 1fr; }
+            .hero-stats { gap: 28px; flex-wrap: wrap; justify-content: center; }
+            .navbar-brand span:last-child { display: none; }
+            .btn-nav-anchor { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            .hero-cta { flex-direction: column; align-items: center; }
+            .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+        }
+
+        /* Floating truck decoration */
+        .truck-decoration {
+            position: absolute;
+            right: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 9rem;
+            opacity: 0.05;
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(-50%) translateX(0); }
+            50%       { transform: translateY(-55%) translateX(-10px); }
+        }
+    </style>
 </head>
 
-<body class="bg-gray-50 text-gray-800 font-sans antialiased">
-
-    <!-- Auth Container -->
-    <div id="auth-container"
-        class="hidden min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600">
-        <!-- Login Form will be injected here -->
+<body>
+    <!-- Animated background -->
+    <div class="bg-canvas">
+        <div class="bg-grid"></div>
     </div>
 
-    <!-- App Container -->
-    <div id="app-container" class="hidden flex h-screen overflow-hidden">
+    <!-- Toast notification -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
-        <!-- Sidebar -->
-        <aside
-            class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col z-10 transition-transform duration-300"
-            id="sidebar">
-            <div class="h-16 flex items-center justify-center border-b border-gray-200">
-                <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
-                    🚛 FleetFlow
-                </h1>
-            </div>
+    <!-- ================================================================
+         NAVBAR
+    ================================================================ -->
+    <nav class="navbar" id="navbar">
+        <a href="landing.html" class="navbar-brand" id="brand-link">
+            <div class="navbar-logo">🚛</div>
+            Fleet<span>Flow</span>
+        </a>
 
-            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1" id="sidebar-nav">
-                <!-- Navigation items injected by JS -->
-            </nav>
-
-            <div class="p-4 border-t border-gray-200">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
-                        id="user-avatar">
-                        <!-- Initials -->
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900" id="user-name">User Name</p>
-                        <p class="text-xs text-gray-500" id="user-role">Role</p>
-                    </div>
-                </div>
-                <button id="logout-btn"
-                    class="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
-                    <span data-i18n="logout">Logout</span>
-                </button>
-
-                <div class="mt-4 border-t border-gray-100 pt-4">
-                    <div class="flex items-center justify-between px-2">
-                        <span class="text-xs text-gray-400">Language</span>
-                        <select onchange="I18n.setLanguage(this.value)"
-                            class="text-xs border border-gray-200 rounded px-1 py-0.5 bg-gray-50 focus:ring-0 cursor-pointer"
-                            id="desktop-lang-select">
-                            <option value="en">English</option>
-                            <option value="si">Sinhala</option>
-                            <option value="ta">Tamil</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col h-full relative overflow-hidden">
-
-            <!-- Mobile Header -->
-            <header
-                class="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-20">
-                <h1 class="text-xl font-bold text-primary">FleetFlow</h1>
-                <div class="flex items-center gap-2">
-                    <select onchange="I18n.setLanguage(this.value)"
-                        class="text-sm border-none bg-transparent focus:ring-0 cursor-pointer" id="mobile-lang-select">
-                        <option value="en">EN</option>
-                        <option value="si">SI</option>
-                        <option value="ta">TA</option>
-                    </select>
-                    <button id="mobile-menu-btn" class="text-gray-600 focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h16m-7 6h7"></path>
-                        </svg>
-                    </button>
-                </div>
-            </header>
-
-            <!-- Mobile Sidebar Overlay -->
-            <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
-
-            <!-- Page Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6" id="main-content">
-                <!-- Dynamic Content injected by JS -->
-            </main>
+        <div class="navbar-actions">
+            <a href="#services" class="btn-nav-anchor">Services</a>
+            <a href="#request" class="btn-nav-anchor">Request</a>
+            <a href="index.html" class="btn-login" id="staff-login-btn" title="Staff & Admin Login">
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M18 12H9m0 0l3-3m-3 3l3 3" />
+                </svg>
+                Staff Login
+            </a>
         </div>
-    </div>
+    </nav>
 
-    <!-- Modals Container -->
-    <div id="modal-container"></div>
+    <!-- ================================================================
+         HERO SECTION
+    ================================================================ -->
+    <section class="hero" id="home">
+        <div class="truck-decoration" aria-hidden="true">🚛</div>
 
-    <!-- Scripts -->
-    <script src="js/store.js"></script>
-    <script src="js/i18n.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/app.js"></script>
+        <div class="hero-badge">🚀 Fast • Reliable • Transparent</div>
+
+        <h1 class="hero-title">
+            Move Your Cargo<br>
+            <span class="line-blue">Smarter &</span>
+            <span class="line-gold"> Faster</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            Professional fleet and logistics services tailored for your business.
+            Book trucks, freight, and deliveries in minutes — tracked every step of the way.
+        </p>
+
+        <div class="hero-cta">
+            <a href="#request" class="btn-primary" id="hero-request-btn">
+                Request a Service
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+            </a>
+            <a href="#services" class="btn-secondary" id="hero-services-btn">
+                Our Services
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+            </a>
+        </div>
+
+        <div class="hero-stats">
+            <div class="stat-item">
+                <div class="stat-number">500<span>+</span></div>
+                <div class="stat-label">Deliveries/Month</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">98<span>%</span></div>
+                <div class="stat-label">On-Time Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">120<span>+</span></div>
+                <div class="stat-label">Fleet Vehicles</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24<span>/7</span></div>
+                <div class="stat-label">Support</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================
+         SERVICES SECTION
+    ================================================================ -->
+    <section class="services" id="services">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-eyebrow">What We Offer</span>
+                <h2 class="section-title">End-to-End Logistics Solutions</h2>
+                <p class="section-desc">From local deliveries to long-haul freight — we have the fleet and expertise to handle it all.</p>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card reveal">
+                    <div class="service-icon icon-blue">🚛</div>
+                    <h3 class="service-name">Truck Booking</h3>
+                    <p class="service-desc">Reserve trucks of various sizes for your specific load requirements. Available daily, weekly, or on-demand.</p>
+                </div>
+                <div class="service-card reveal">
+                    <div class="service-icon icon-gold">📦</div>
+                    <h3 class="service-name">Freight & Cargo</h3>
+                    <p class="service-desc">Safe and reliable freight transport for bulk goods, machinery, raw materials, and commercial cargo.</p>
+                </div>
+                <div class="service-card reveal">
+                    <div class="service-icon icon-green">🚚</div>
+                    <h3 class="service-name">Last-Mile Delivery</h3>
+                    <p class="service-desc">Efficient final-mile delivery solutions ensuring your packages reach customers on time, every time.</p>
+                </div>
+                <div class="service-card reveal">
+                    <div class="service-icon icon-purple">📍</div>
+                    <h3 class="service-name">Live GPS Tracking</h3>
+                    <p class="service-desc">Real-time tracking of your shipment with instant notifications at every milestone of the journey.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================
+         SERVICE REQUEST FORM
+    ================================================================ -->
+    <section class="request-section" id="request">
+        <div class="container">
+            <div class="form-wrapper reveal">
+                <div class="form-header">
+                    <h2>📋 Request a Service</h2>
+                    <p>Fill in the details below and our team will contact you within 2 business hours.</p>
+                </div>
+
+                <form id="service-request-form" novalidate>
+                    <div class="form-grid">
+
+                        <!-- CONTACT INFO -->
+                        <div class="form-section-label">Contact Information</div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-name">Full Name <span class="required">*</span></label>
+                            <input class="form-input" type="text" id="req-name" name="name"
+                                placeholder="e.g. Kamal Perera" autocomplete="name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-company">Company / Business</label>
+                            <input class="form-input" type="text" id="req-company" name="company"
+                                placeholder="e.g. Perera Trading Co." autocomplete="organization">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-phone">Phone Number <span class="required">*</span></label>
+                            <input class="form-input" type="tel" id="req-phone" name="phone"
+                                placeholder="e.g. +94 77 123 4567" autocomplete="tel" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-email">Email Address <span class="required">*</span></label>
+                            <input class="form-input" type="email" id="req-email" name="email"
+                                placeholder="e.g. kamal@company.com" autocomplete="email" required>
+                        </div>
+
+                        <!-- DIVIDER -->
+                        <div class="form-divider"></div>
+
+                        <!-- SERVICE DETAILS -->
+                        <div class="form-section-label">Service Details</div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-service">Service Type <span class="required">*</span></label>
+                            <select class="form-select" id="req-service" name="service" required>
+                                <option value="" disabled selected>Select a service…</option>
+                                <option value="truck-booking">🚛 Truck Booking</option>
+                                <option value="freight">📦 Freight & Cargo Transport</option>
+                                <option value="last-mile">🚚 Last-Mile Delivery</option>
+                                <option value="full-truckload">🏗️ Full Truckload (FTL)</option>
+                                <option value="less-than-truckload">📫 Less-Than-Truckload (LTL)</option>
+                                <option value="refrigerated">❄️ Refrigerated / Cold Chain</option>
+                                <option value="heavy-haulage">⚙️ Heavy Haulage / Oversize</option>
+                                <option value="other">💬 Other / Custom Request</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-vehicle">Vehicle Size</label>
+                            <select class="form-select" id="req-vehicle" name="vehicleSize">
+                                <option value="" disabled selected>Select size…</option>
+                                <option value="mini">Mini Van (up to 1 ton)</option>
+                                <option value="light">Light Truck (1–3 ton)</option>
+                                <option value="medium">Medium Truck (3–8 ton)</option>
+                                <option value="heavy">Heavy Truck (8–20 ton)</option>
+                                <option value="extra-heavy">Extra Heavy (20+ ton)</option>
+                                <option value="not-sure">Not Sure / Advise Me</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-pickup">Pickup Location <span class="required">*</span></label>
+                            <input class="form-input" type="text" id="req-pickup" name="pickup"
+                                placeholder="e.g. Colombo, Pettah" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-delivery">Delivery Location <span class="required">*</span></label>
+                            <input class="form-input" type="text" id="req-delivery" name="delivery"
+                                placeholder="e.g. Kandy, Peradeniya" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-date">Preferred Pickup Date <span class="required">*</span></label>
+                            <input class="form-input" type="date" id="req-date" name="date" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-time">Preferred Time</label>
+                            <input class="form-input" type="time" id="req-time" name="time">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-cargo">Cargo Type / Description</label>
+                            <input class="form-input" type="text" id="req-cargo" name="cargo"
+                                placeholder="e.g. Electronics, Steel Rods, Food Items">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="req-weight">Estimated Weight (kg)</label>
+                            <input class="form-input" type="number" id="req-weight" name="weight"
+                                placeholder="e.g. 2000" min="0">
+                        </div>
+
+                        <div class="form-group full">
+                            <label class="form-label" for="req-notes">Additional Notes</label>
+                            <textarea class="form-textarea" id="req-notes" name="notes"
+                                placeholder="Any special requirements, handling instructions, or extra details…"></textarea>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submit-btn">
+                        <span class="btn-text">Submit Service Request</span>
+                        <div class="spinner"></div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================
+         FOOTER
+    ================================================================ -->
+    <footer class="footer">
+        <div class="footer-brand">Fleet<span>Flow</span></div>
+        <p class="footer-copy">© 2026 FleetFlow Management System. All rights reserved. |
+            <a href="index.html" style="color: var(--clr-primary); text-decoration: none;">Staff Portal →</a>
+        </p>
+    </footer>
+
+    <!-- ================================================================
+         JAVASCRIPT
+    ================================================================ -->
+    <script>
+        /* ---- Scroll reveal ---- */
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12 });
+
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        /* ---- Set min date for date picker ---- */
+        const dateInput = document.getElementById('req-date');
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.min = today;
+        }
+
+        /* ---- Smooth scroll for anchor links ---- */
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href').slice(1);
+                const target = document.getElementById(targetId);
+                if (target) {
+                    e.preventDefault();
+                    const navHeight = document.getElementById('navbar').offsetHeight;
+                    const targetTop = target.getBoundingClientRect().top + window.scrollY - navHeight - 20;
+                    window.scrollTo({ top: targetTop, behavior: 'smooth' });
+                }
+            });
+        });
+
+        /* ---- Toast helper ---- */
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <span class="toast-icon">${type === 'success' ? '✅' : '❌'}</span>
+                <span>${message}</span>`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 5000);
+        }
+
+        /* ---- Form validation & submission ---- */
+        const form = document.getElementById('service-request-form');
+        const submitBtn = document.getElementById('submit-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Basic validation
+            const required = form.querySelectorAll('[required]');
+            let valid = true;
+
+            required.forEach(field => {
+                field.style.borderColor = '';
+                if (!field.value.trim()) {
+                    valid = false;
+                    field.style.borderColor = 'var(--clr-error)';
+                    field.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.18)';
+                } else {
+                    field.style.borderColor = '';
+                    field.style.boxShadow = '';
+                }
+            });
+
+            // Email format check
+            const emailField = document.getElementById('req-email');
+            if (emailField.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailField.value)) {
+                valid = false;
+                emailField.style.borderColor = 'var(--clr-error)';
+                emailField.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.18)';
+            }
+
+            if (!valid) {
+                showToast('Please fill in all required fields correctly.', 'error');
+                // Scroll to first invalid field
+                const firstInvalid = form.querySelector('[required]:placeholder-shown, select:invalid, input:invalid');
+                return;
+            }
+
+            // Simulate submission (replace with your actual API call)
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+
+            // Collect form data
+            const formData = new FormData(form);
+            const requestData = Object.fromEntries(formData.entries());
+            requestData.submittedAt = new Date().toISOString();
+            requestData.status = 'pending';
+            requestData.id = 'REQ-' + Date.now();
+
+            console.log('[FleetFlow] Service Request Submitted:', requestData);
+
+            // Save to localStorage (replace with API / Supabase call as needed)
+            try {
+                const existing = JSON.parse(localStorage.getItem('fleetFlowServiceRequests') || '[]');
+                existing.push(requestData);
+                localStorage.setItem('fleetFlowServiceRequests', JSON.stringify(existing));
+
+                await new Promise(resolve => setTimeout(resolve, 1200)); // Simulated delay
+
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+
+                showToast(`✅ Request ${requestData.id} submitted! We'll contact you within 2 hours.`, 'success');
+                form.reset();
+
+                // Reset field styling
+                form.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(f => {
+                    f.style.borderColor = '';
+                    f.style.boxShadow = '';
+                });
+
+            } catch (error) {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                showToast('Something went wrong. Please try again.', 'error');
+                console.error('[FleetFlow] Submission error:', error);
+            }
+        });
+
+        // Clear error styling on input
+        form.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(field => {
+            field.addEventListener('input', () => {
+                field.style.borderColor = '';
+                field.style.boxShadow = '';
+            });
+        });
+    </script>
 </body>
 
 </html>
